@@ -8,12 +8,19 @@ plugins {
     jacoco
 }
 buildscript {
+    val kotlinVersion by extra("1.4.20")
     repositories {
         mavenLocal()
-        maven(url = "https://repo.eclipse.org/service/local/repositories/maven_central/content")
         mavenCentral()
+        maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
+        google()
+        jcenter()
     }
     dependencies {
+        classpath("com.android.tools.build:gradle:4.1.0")
+        classpath ("com.diffplug.spotless:spotless-plugin-gradle:3.27.1")
+        classpath ("org.jetbrains.dokka:dokka-gradle-plugin:0.10.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
         classpath("org.eclipse.keyple:keyple-gradle:0.2.+")
     }
 }
@@ -22,17 +29,26 @@ apply(plugin = "org.eclipse.keyple")
 ///////////////////////////////////////////////////////////////////////////////
 //  APP CONFIGURATION
 ///////////////////////////////////////////////////////////////////////////////
-repositories {
-    mavenLocal()
-    maven(url = "https://repo.eclipse.org/service/local/repositories/maven_central/content")
-    mavenCentral()
-    maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
+allprojects{
+    group = "org.eclipse.keyple"
+    apply (plugin = "org.jetbrains.dokka")
+    apply (plugin = "com.diffplug.spotless")
+    project.version = "1.0.1"
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
+        google()
+        jcenter()
+    }
 }
+
 dependencies {
     implementation("org.eclipse.keyple:keyple-java-commons-api:2.0-SNAPSHOT")
     implementation("org.eclipse.keyple:keyple-java-plugin-api:2.0-SNAPSHOT")
     implementation("org.eclipse.keyple:keyple-java-utils:2.0.0-SNAPSHOT")
-    implementation("org.slf4j:slf4j-api:1.7.25")
+    implementation("org.slf4j:slf4j-api:1.7.30")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.assertj:assertj-core:3.15.0")
 }
@@ -52,6 +68,11 @@ java {
 ///////////////////////////////////////////////////////////////////////////////
 tasks {
     spotless {
+        kotlin{
+            target("src/**/*.kt")
+            licenseHeaderFile("gradle/license_header.txt")
+            ktlint()
+        }
         java {
             target("src/**/*.java")
             licenseHeaderFile("gradle/license_header.txt")
