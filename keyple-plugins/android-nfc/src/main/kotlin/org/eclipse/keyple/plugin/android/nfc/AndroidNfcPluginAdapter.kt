@@ -12,20 +12,43 @@
 package org.eclipse.keyple.plugin.android.nfc
 
 import android.app.Activity
+import android.os.Build
 import org.eclipse.keyple.core.plugin.spi.PluginSpi
 import org.eclipse.keyple.core.plugin.spi.reader.ReaderSpi
 
 class AndroidNfcPluginAdapter(private val activity: Activity) : AndroidNfcPlugin, PluginSpi {
 
+    /**
+     * {@inheritDoc}
+     *
+     * @since 2.0
+     */
     override fun getName(): String {
         return AndroidNfcPlugin.PLUGIN_NAME
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @since 2.0
+     */
     override fun searchAvailableReaders(): MutableSet<ReaderSpi> {
-        TODO("Not yet implemented")
+        val readerSpis = HashSet<ReaderSpi>()
+        readerSpis.add(
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                AndroidNfcReaderPreNAdapter(activity)
+            } else {
+                AndroidNfcReaderPostNAdapter(activity)
+            })
+        return readerSpis
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @since 2.0
+     */
     override fun unregister() {
-        TODO("Not yet implemented")
+        // Nothing to do for this plugin
     }
 }
