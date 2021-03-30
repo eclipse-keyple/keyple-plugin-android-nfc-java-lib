@@ -21,16 +21,24 @@ import org.eclipse.keyple.core.plugin.ReaderIOException
 import org.eclipse.keyple.core.plugin.WaitForCardInsertionAutonomousReaderApi
 import org.eclipse.keyple.core.plugin.WaitForCardRemovalAutonomousReaderApi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.ObservableReaderSpi
+import org.eclipse.keyple.core.plugin.spi.reader.observable.state.insertion.WaitForCardInsertionAutonomousSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.state.processing.DontWaitForCardRemovalDuringProcessingSpi
 import org.eclipse.keyple.core.util.ByteArrayUtil
 import timber.log.Timber
 
-abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : AndroidNfcReader, ObservableReaderSpi, WaitForCardInsertionAutonomousReaderApi, WaitForCardRemovalAutonomousReaderApi, DontWaitForCardRemovalDuringProcessingSpi, NfcAdapter.ReaderCallback {
+internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : AndroidNfcReader,
+        ObservableReaderSpi,
+        WaitForCardInsertionAutonomousSpi,
+        DontWaitForCardRemovalDuringProcessingSpi,
+        NfcAdapter.ReaderCallback {
 
     private var activityWeakRef = WeakReference(activity)
     private val activatedProtocols = ArrayList<AndroidNfcReader.AndroidNfcSupportedProtocols>()
     private var tagProxy: TagProxy? = null
     protected var nfcAdapter: NfcAdapter? = null
+
+    lateinit var waitForCardInsertionAutonomousReaderApi: WaitForCardInsertionAutonomousReaderApi
+    lateinit var waitForCardRemovalAutonomousReaderApi: WaitForCardRemovalAutonomousReaderApi
 
     companion object {
         private const val NO_TAG = "no-tag"
@@ -236,6 +244,15 @@ abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : AndroidNfcR
         return protocol.androidNfcTechIdentifier == tagProxy?.tech
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @since 2.0
+     */
+    override fun connect(waitForCardInsertionAutonomousReaderApi: WaitForCardInsertionAutonomousReaderApi) {
+        this.waitForCardInsertionAutonomousReaderApi = waitForCardInsertionAutonomousReaderApi
+    }
+
     private fun clearContext() {
         activityWeakRef.clear()
         activityWeakRef = WeakReference(null)
@@ -243,7 +260,10 @@ abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : AndroidNfcR
     }
 
     /**
+     * When a card is presented within the NFC field, the event
+     * is transmitted from Android OS component to keyple
      *
+     * @since 2.0
      */
     override fun onTagDiscovered(tag: Tag?) {
         Timber.i("Received Tag Discovered event $tag")
@@ -251,13 +271,16 @@ abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : AndroidNfcR
             try {
                 Timber.i("Getting tag proxy")
                 tagProxy = TagProxy.getTagProxy(tag)
-                onCardInserted()
+                waitForCardInsertionAutonomousReaderApi.onCardInserted()
             } catch (e: NoSuchElementException) {
                 Timber.e(e)
             }
         }
     }
 
+    /**
+     * Only for logging purpose
+     */
     private fun printTagId(): String {
         return with(tagProxy) {
             if (this == null) {
@@ -275,5 +298,12 @@ abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : AndroidNfcR
                 "$tagId - $techList"
             }
         }
+    }
+
+    /**
+     * Allow to retrieve tag reguardless of Android version
+     */
+    protected fun getTagProxyTag(): Tag? {
+        return tagProxy?.tag
     }
 }
