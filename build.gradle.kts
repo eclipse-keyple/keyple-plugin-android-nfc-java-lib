@@ -69,9 +69,9 @@ java {
 tasks {
     spotless {
         kotlin{
-            target("src/**/*.kt")
-            licenseHeaderFile("gradle/license_header.txt")
+            target("**/*.kt")
             ktlint()
+            licenseHeaderFile("gradle/license_header.txt")
         }
         java {
             target("src/**/*.java")
