@@ -1,14 +1,14 @@
-/********************************************************************************
+/* **************************************************************************************
  * Copyright (c) 2020 Calypso Networks Association https://www.calypsonet-asso.org/
  *
- * See the NOTICE file(s) distributed with this work for additional information regarding copyright
- * ownership.
+ * See the NOTICE file(s) distributed with this work for additional information
+ * regarding copyright ownership.
  *
- * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0
  *
  * SPDX-License-Identifier: EPL-2.0
- ********************************************************************************/
+ ************************************************************************************** */
 package org.eclipse.keyple.plugin.android.nfc.example.activity
 
 import android.nfc.NfcAdapter
@@ -40,9 +40,9 @@ import org.eclipse.keyple.core.service.exception.KeypleReaderException
 import org.eclipse.keyple.core.service.exception.KeypleReaderNotFoundException
 import org.eclipse.keyple.core.service.util.ContactlessCardCommonProtocols
 import org.eclipse.keyple.core.util.ByteArrayUtil
-import org.eclipse.keyple.plugin.android.nfc.example.util.CalypsoClassicInfo
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcProtocolSettings
 import org.eclipse.keyple.plugin.android.nfc.example.R
+import org.eclipse.keyple.plugin.android.nfc.example.util.CalypsoClassicInfo
 import timber.log.Timber
 
 /**
