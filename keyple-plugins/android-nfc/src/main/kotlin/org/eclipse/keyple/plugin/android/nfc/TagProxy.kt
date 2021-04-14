@@ -41,9 +41,9 @@ internal class TagProxy private constructor(private val tagTechnology: TagTechno
     val atr: ByteArray
         @Throws(IOException::class, NoSuchElementException::class)
         get() = when (tech) {
-            AndroidNfcReader.AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier -> ByteArrayUtil.fromHex("3B8F8001804F0CA000000306030001000000006A")
-            AndroidNfcReader.AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier -> ByteArrayUtil.fromHex("3B8F8001804F0CA0000003060300030000000068")
-            AndroidNfcReader.AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier ->
+            AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier -> ByteArrayUtil.fromHex("3B8F8001804F0CA000000306030001000000006A")
+            AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier -> ByteArrayUtil.fromHex("3B8F8001804F0CA0000003060300030000000068")
+            AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier ->
                 if ((tagTechnology as IsoDep).hiLayerResponse != null)
                     tagTechnology.hiLayerResponse
                 else
@@ -59,9 +59,9 @@ internal class TagProxy private constructor(private val tagTechnology: TagTechno
     @Throws(IOException::class, NoSuchElementException::class)
     fun transceive(data: ByteArray): ByteArray {
         return when (tech) {
-            AndroidNfcReader.AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier -> (tagTechnology as MifareClassic).transceive(data)
-            AndroidNfcReader.AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier -> (tagTechnology as MifareUltralight).transceive(data)
-            AndroidNfcReader.AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier -> (tagTechnology as IsoDep).transceive(data)
+            AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier -> (tagTechnology as MifareClassic).transceive(data)
+            AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier -> (tagTechnology as MifareUltralight).transceive(data)
+            AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier -> (tagTechnology as IsoDep).transceive(data)
             else -> throw NoSuchElementException("Protocol $tech not found in plugin's settings.")
         }
     }
@@ -117,21 +117,21 @@ internal class TagProxy private constructor(private val tagTechnology: TagTechno
             Timber.i("Matching Tag Type : $tag")
 
             return when (tag.techList.first {
-                it == AndroidNfcReader.AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier ||
-                        it == AndroidNfcReader.AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier ||
-                        it == AndroidNfcReader.AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier }) {
+                it == AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier ||
+                        it == AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier ||
+                        it == AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier }) {
 
-                AndroidNfcReader.AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier -> {
+                AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier -> {
                     Timber.d("Tag embedded into IsoDep")
-                    TagProxy(IsoDep.get(tag), AndroidNfcReader.AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier)
+                    TagProxy(IsoDep.get(tag), AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier)
                 }
-                AndroidNfcReader.AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier -> {
+                AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier -> {
                     Timber.d("Tag embedded into MifareClassic")
-                    TagProxy(MifareClassic.get(tag), AndroidNfcReader.AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier)
+                    TagProxy(MifareClassic.get(tag), AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier)
                 }
-                AndroidNfcReader.AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier -> {
+                AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier -> {
                     Timber.d("Tag embedded into MifareUltralight")
-                    TagProxy(MifareUltralight.get(tag), AndroidNfcReader.AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier)
+                    TagProxy(MifareUltralight.get(tag), AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier)
                 }
                 else -> throw NoSuchElementException("If received tech identifier does match a tech we can't handle.")
             }
