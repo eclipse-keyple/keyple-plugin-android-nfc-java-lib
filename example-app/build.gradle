@@ -42,14 +42,11 @@ android {
 
 dependencies {
 
-    //import the last version of keyple-java-core
-    implementation group: 'org.eclipse.keyple', name: 'keyple-java-core', version: '1.0.0'
+//    //Import keyple elements
+    implementation "org.eclipse.keyple:keyple-java-card-calypso:2.0.0-SNAPSHOT"
+    implementation "org.eclipse.keyple:keyple-java-service:2.0.0-SNAPSHOT"
 
-    //import the last version of keyple-java-calypso
-    implementation group: 'org.eclipse.keyple', name: 'keyple-java-calypso', version: '1.0.0'
-
-    //import the last version of keyple-java-plugin-nfc
-    implementation group: 'org.eclipse.keyple', name: 'keyple-android-plugin-nfc', version: '1.0.0'
+    implementation project(path: ':keyple-plugins:android-nfc')
 
     /*
     Android components

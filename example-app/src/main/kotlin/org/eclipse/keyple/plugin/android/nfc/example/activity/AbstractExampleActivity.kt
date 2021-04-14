@@ -26,16 +26,16 @@ import kotlinx.android.synthetic.main.activity_calypso_examples.drawerLayout
 import kotlinx.android.synthetic.main.activity_calypso_examples.eventRecyclerView
 import kotlinx.android.synthetic.main.activity_calypso_examples.navigationView
 import kotlinx.android.synthetic.main.activity_calypso_examples.toolbar
-import org.eclipse.keyple.core.card.selection.AbstractSmartCard
-import org.eclipse.keyple.core.card.selection.CardSelectionsService
-import org.eclipse.keyple.core.service.SmartCardService
-import org.eclipse.keyple.core.service.event.ObservableReader
-import org.eclipse.keyple.core.service.event.ReaderEvent
-import org.eclipse.keyple.core.service.event.ReaderObservationExceptionHandler
-import org.eclipse.keyple.core.service.util.ContactlessCardCommonProtocols
+import org.eclipse.keyple.core.service.ObservableReader
+import org.eclipse.keyple.core.service.Reader
+import org.eclipse.keyple.core.service.ReaderEvent
+import org.eclipse.keyple.core.service.SmartCardServiceProvider
+import org.eclipse.keyple.core.service.selection.CardSelectionService
+import org.eclipse.keyple.core.service.selection.spi.SmartCard
+import org.eclipse.keyple.core.service.spi.ReaderObserverSpi
 import org.eclipse.keyple.core.util.ByteArrayUtil
-import org.eclipse.keyple.plugin.android.nfc.AndroidNfcPluginFactory
-import org.eclipse.keyple.plugin.android.nfc.AndroidNfcProtocolSettings
+import org.eclipse.keyple.core.util.protocol.ContactlessCardCommonProtocol
+import org.eclipse.keyple.plugin.android.nfc.AndroidNfcPluginFactoryAdapter
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcReader
 import org.eclipse.keyple.plugin.android.nfc.example.R
 import org.eclipse.keyple.plugin.android.nfc.example.adapter.EventAdapter
@@ -43,7 +43,7 @@ import org.eclipse.keyple.plugin.android.nfc.example.model.ChoiceEventModel
 import org.eclipse.keyple.plugin.android.nfc.example.model.EventModel
 import timber.log.Timber
 
-abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, ObservableReader.ReaderObserver {
+abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, ReaderObserverSpi {
 
     /**
      * Use to modify event update behaviour regarding current use case execution
@@ -59,10 +59,10 @@ abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnN
     private lateinit var layoutManager: RecyclerView.LayoutManager
     protected val events = arrayListOf<EventModel>()
 
-    protected lateinit var reader: AndroidNfcReader
+    protected lateinit var reader: Reader
 
     protected var useCase: UseCase? = null
-    protected lateinit var cardSelectionsService: CardSelectionsService
+    protected lateinit var cardSelectionsService: CardSelectionService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,27 +84,27 @@ abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnN
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        val readerObservationExceptionHandler = ReaderObservationExceptionHandler { pluginName, readerName, e -> }
-
         /**
          * Register AndroidNfc plugin Factory
          */
-        val plugin = SmartCardService.getInstance().registerPlugin(AndroidNfcPluginFactory(this, readerObservationExceptionHandler))
+        val plugin = SmartCardServiceProvider.getService().registerPlugin(AndroidNfcPluginFactoryAdapter(this))
 
         /**
-         *  remove the observer if it already exist
+         * Configure Nfc Reader
          */
-        reader = plugin.readers.values.first() as AndroidNfcReader
-        reader.presenceCheckDelay = 100
-        reader.noPlateformSound = false
-        reader.skipNdefCheck = false
-
-        (reader as ObservableReader).addObserver(this)
-
-        // with this protocol settings we activate the nfc for ISO1443_4 protocol
-        reader.activateProtocol(ContactlessCardCommonProtocols.ISO_14443_4.name,
-                AndroidNfcProtocolSettings.getSetting(ContactlessCardCommonProtocols.ISO_14443_4.name))
-
+        with(plugin.readers.values.first() as AndroidNfcReader) {
+            presenceCheckDelay = 100
+            noPlateformSound = false
+            skipNdefCheck = false
+            // with this protocol settings we activate the nfc for ISO1443_4 protocol
+            activateProtocol(ContactlessCardCommonProtocol.ISO_14443_4.name)
+            with(this as ObservableReader) {
+                addObserver(this@AbstractExampleActivity)
+                setReaderObservationExceptionHandler { pluginName, readerName, e ->
+                    Timber.e("An unexpected reader error occurred: $pluginName:$readerName : $e")
+                }
+            }
+        }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
@@ -172,13 +172,13 @@ abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnN
     abstract fun initContentView()
 
     override fun onDestroy() {
-        SmartCardService.getInstance().plugins.forEach {
-            SmartCardService.getInstance().unregisterPlugin(it.key)
+        SmartCardServiceProvider.getService().plugins.forEach {
+            SmartCardServiceProvider.getService().unregisterPlugin(it.key)
         }
         super.onDestroy()
     }
 
-    protected fun getSmardCardInfos(smartCard: AbstractSmartCard, index: Int): String {
+    protected fun getSmardCardInfos(smartCard: SmartCard, index: Int): String {
         val atr = try {
             ByteArrayUtil.toHex(smartCard.atrBytes)
         } catch (e: IllegalStateException) {
