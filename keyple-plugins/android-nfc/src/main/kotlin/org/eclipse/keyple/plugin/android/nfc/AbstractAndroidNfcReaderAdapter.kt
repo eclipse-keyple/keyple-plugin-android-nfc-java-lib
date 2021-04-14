@@ -12,8 +12,10 @@
 package org.eclipse.keyple.plugin.android.nfc
 
 import android.app.Activity
+import android.content.Intent
 import android.nfc.NfcAdapter
 import android.nfc.Tag
+import android.os.Bundle
 import java.io.IOException
 import java.lang.ref.WeakReference
 import org.eclipse.keyple.core.plugin.CardIOException
@@ -27,18 +29,81 @@ import org.eclipse.keyple.core.util.ByteArrayUtil
 import timber.log.Timber
 
 internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : AndroidNfcReader,
-        ObservableReaderSpi,
         WaitForCardInsertionAutonomousSpi,
         DontWaitForCardRemovalDuringProcessingSpi,
         NfcAdapter.ReaderCallback {
 
     private var activityWeakRef = WeakReference(activity)
-    private val activatedProtocols = ArrayList<AndroidNfcReader.AndroidNfcSupportedProtocols>()
+    private val activatedProtocols = ArrayList<AndroidNfcSupportedProtocols>()
     private var tagProxy: TagProxy? = null
     protected var nfcAdapter: NfcAdapter? = null
 
+    private var mPresenceCheckDelay: Int? = null
+    private var mNoPlateformSound: Boolean? = null
+    private var mSkipNdefCheck: Boolean? = null
+
     lateinit var waitForCardInsertionAutonomousReaderApi: WaitForCardInsertionAutonomousReaderApi
     lateinit var waitForCardRemovalAutonomousReaderApi: WaitForCardRemovalAutonomousReaderApi
+
+    override var presenceCheckDelay: Int?
+        get() = mPresenceCheckDelay
+        set(value) {
+            mPresenceCheckDelay = value
+        }
+
+    override var noPlateformSound: Boolean?
+        get() = mNoPlateformSound
+        set(value) {
+            mNoPlateformSound = value
+        }
+
+    override var skipNdefCheck: Boolean?
+        get() = mSkipNdefCheck
+        set(value) {
+            mSkipNdefCheck = value
+        }
+
+    /**
+     * Build Reader Mode flags Integer from parameters
+     *
+     * @return flags Integer
+     */
+    // Build flags list for reader mode
+    val flags: Int
+        get() {
+            var flags = 0
+
+            if (skipNdefCheck != null && skipNdefCheck == true) {
+                flags = flags or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK
+            }
+
+            if (noPlateformSound != null && noPlateformSound == true) {
+                flags = flags or NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS
+            }
+            for (cardProtocol in this.activatedProtocols) {
+                if (AndroidNfcSupportedProtocols.ISO_14443_4 == cardProtocol) {
+                    flags = flags or NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_NFC_A
+                } else if (AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT == cardProtocol || AndroidNfcSupportedProtocols.MIFARE_CLASSIC == cardProtocol) {
+                    flags = flags or NfcAdapter.FLAG_READER_NFC_A
+                }
+            }
+
+            return flags
+        }
+
+    /**
+     * Build Reader Mode options Bundle from parameters
+     *
+     * @return options
+     */
+    val options: Bundle
+        get() {
+            val options = Bundle(1)
+            presenceCheckDelay?.let { delay ->
+                options.putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, delay)
+            }
+            return options
+        }
 
     companion object {
         private const val NO_TAG = "no-tag"
@@ -116,10 +181,10 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      *
      * @since 2.0
      */
-    override fun getATR(): ByteArray? {
+    override fun getAtr(): ByteArray {
         val atr = tagProxy?.atr
         Timber.d("ATR : ${ByteArrayUtil.toHex(atr)}")
-        return if (atr?.isNotEmpty() == true) atr else null
+        return atr ?: byteArrayOf()
     }
 
     /**
@@ -184,7 +249,24 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      * @since 2.0
      */
     override fun onStartDetection() {
-        TODO("Not yet implemented")
+        Timber.d("onStartDetection")
+        if (activityWeakRef.get() == null) {
+            throw IllegalStateException("onStartDetection() failed : no context available")
+        }
+
+        if (nfcAdapter == null) {
+            nfcAdapter = NfcAdapter.getDefaultAdapter(activityWeakRef.get()!!)
+        }
+
+        val flags = flags
+
+        val options = options
+
+        Timber.i("Enabling Read Write Mode with flags : $flags and options : $options")
+
+        // Reader mode for NFC reader allows to listen to NFC events without the Intent mechanism.
+        // It is active only when the activity thus the fragment is active.
+        nfcAdapter?.enableReaderMode(activityWeakRef.get(), this, flags, options)
     }
 
     /**
@@ -193,7 +275,14 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      * @since 2.0
      */
     override fun onStopDetection() {
-        TODO("Not yet implemented")
+        Timber.d("onStopDetection")
+        nfcAdapter?.let {
+            if (activityWeakRef.get() != null) {
+                it.disableReaderMode(activityWeakRef.get())
+            } else {
+                throw IllegalStateException("onStopDetection failed : no context available")
+            }
+        }
     }
 
     /**
@@ -204,7 +293,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     @Throws(IllegalStateException::class)
     override fun isProtocolSupported(readerProtocol: String): Boolean {
         return try {
-                AndroidNfcReader.AndroidNfcSupportedProtocols.values().first { it.name == readerProtocol }
+                AndroidNfcSupportedProtocols.values().first { it.name == readerProtocol }
                 true
             } catch (e: NoSuchElementException) {
                 throw IllegalStateException("Unsupported protocol $readerProtocol")
@@ -220,7 +309,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      */
     override fun activateProtocol(readerProtocol: String) {
         if (activatedProtocols.firstOrNull { it.name == readerProtocol } == null) {
-            activatedProtocols.add(AndroidNfcReader.AndroidNfcSupportedProtocols.valueOf(readerProtocol))
+            activatedProtocols.add(AndroidNfcSupportedProtocols.valueOf(readerProtocol))
         }
     }
 
@@ -230,7 +319,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      * @since 2.0
      */
     override fun deactivateProtocol(readerProtocol: String) {
-        AndroidNfcReader.AndroidNfcSupportedProtocols
+        AndroidNfcSupportedProtocols
                 .values().firstOrNull { it.name == readerProtocol }?.let { activatedProtocols.remove(it) }
     }
 
@@ -279,9 +368,22 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     }
 
     /**
+     * Process data from NFC Intent
+     *
+     * @param intent : Intent received and filterByProtocol by xml tech_list
+     *
+     * @since 2.0
+     */
+    override fun processIntent(intent: Intent) {
+        // Extract Tag from Intent
+        val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
+        this.onTagDiscovered(tag)
+    }
+
+    /**
      * Only for logging purpose
      */
-    private fun printTagId(): String {
+    override fun printTagId(): String {
         return with(tagProxy) {
             if (this == null) {
                 NO_TAG
@@ -302,6 +404,8 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
 
     /**
      * Allow to retrieve tag reguardless of Android version
+     *
+     * @since 2.0
      */
     protected fun getTagProxyTag(): Tag? {
         return tagProxy?.tag

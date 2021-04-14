@@ -17,7 +17,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:4.1.0")
+        classpath("com.android.tools.build:gradle:4.1.3")
         classpath ("com.diffplug.spotless:spotless-plugin-gradle:3.27.1")
         classpath ("org.jetbrains.dokka:dokka-gradle-plugin:0.10.0")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
@@ -45,9 +45,6 @@ allprojects{
 }
 
 dependencies {
-    implementation("org.eclipse.keyple:keyple-java-commons-api:2.0-SNAPSHOT")
-    implementation("org.eclipse.keyple:keyple-java-plugin-api:2.0-SNAPSHOT")
-    implementation("org.eclipse.keyple:keyple-java-utils:2.0.0-SNAPSHOT")
     implementation("org.slf4j:slf4j-api:1.7.30")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.assertj:assertj-core:3.15.0")

@@ -100,9 +100,9 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${project.kotlinVersion}"
 
     //keyple
-    implementation "org.eclipse.keyple:keyple-java-commons-api:2.0-SNAPSHOT"
-    implementation "org.eclipse.keyple:keyple-java-plugin-api:2.0-SNAPSHOT"
-    implementation "org.eclipse.keyple:keyple-java-utils:2.0.0-SNAPSHOT"
+    api "org.eclipse.keyple:keyple-java-commons-api:2.0-SNAPSHOT"
+    api "org.eclipse.keyple:keyple-java-plugin-api:2.0-SNAPSHOT"
+    api "org.eclipse.keyple:keyple-java-utils:2.0.0-SNAPSHOT"
 
     //android
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
