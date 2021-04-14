@@ -62,5 +62,4 @@ interface AndroidNfcReader : KeypleReaderExtension, ObservableReaderSpi {
      * @since 2.0
      */
     var skipNdefCheck: Boolean?
-
 }
