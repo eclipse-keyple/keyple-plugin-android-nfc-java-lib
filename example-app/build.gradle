@@ -42,11 +42,16 @@ android {
 
 dependencies {
 
-//    //Import keyple elements
-    implementation "org.eclipse.keyple:keyple-java-card-calypso:2.0.0-SNAPSHOT"
+    //Keyple Common
+    implementation project(path: ':keyple-plugins:android-nfc')
     implementation "org.eclipse.keyple:keyple-java-service:2.0.0-SNAPSHOT"
 
-    implementation project(path: ':keyple-plugins:android-nfc')
+    //For Calypso Extension examples
+    implementation "org.eclipse.keyple:keyple-java-card-calypso:2.0.0-SNAPSHOT"
+
+    //For Generic Extension examples
+    implementation "org.eclipse.keyple:keyple-java-card-api:2.0-SNAPSHOT"
+
 
     /*
     Android components

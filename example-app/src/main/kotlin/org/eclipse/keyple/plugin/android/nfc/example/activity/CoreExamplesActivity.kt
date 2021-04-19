@@ -19,13 +19,14 @@ import kotlinx.android.synthetic.main.activity_core_examples.toolbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.eclipse.keyple.card.calypso.CalypsoCardExtensionProvider
+import org.eclipse.keyple.card.generic.GenericCardExtensionProvider
 import org.eclipse.keyple.core.service.CardSelectionServiceFactory
 import org.eclipse.keyple.core.service.KeypleCardCommunicationException
 import org.eclipse.keyple.core.service.KeypleReaderCommunicationException
 import org.eclipse.keyple.core.service.ObservableReader
 import org.eclipse.keyple.core.service.Reader
 import org.eclipse.keyple.core.service.ReaderEvent
+import org.eclipse.keyple.core.service.SmartCardServiceProvider
 import org.eclipse.keyple.core.service.selection.CardSelectionService
 import org.eclipse.keyple.core.service.selection.CardSelector
 import org.eclipse.keyple.core.service.selection.MultiSelectionProcessing
@@ -95,8 +96,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                     .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                     .build()
 
-                cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                    .createPoCardSelection(cardSelectorFirst, false))
+                cardSelectionsService.prepareSelection(GenericCardExtensionProvider.getService().createGenericCardSelection(cardSelectorFirst))
 
                 /* Do the selection and display the result */
                 addActionEvent("FIRST MATCH Calypso PO selection for prefix: $cardAidPrefix")
@@ -120,8 +120,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                     .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                     .build()
 
-                cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                    .createPoCardSelection(cardSelectorNext, false))
+                cardSelectionsService.prepareSelection(GenericCardExtensionProvider.getService().createGenericCardSelection(cardSelectorNext))
 
                 /* Do the selection and display the result */
                 addActionEvent("NEXT MATCH Calypso PO selection for prefix: $cardAidPrefix")
@@ -173,8 +172,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                     .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                     .build()
 
-                cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                    .createPoCardSelection(cardSelectorFirst, false))
+                cardSelectionsService.prepareSelection(GenericCardExtensionProvider.getService().createGenericCardSelection(cardSelectorFirst))
 
                 val cardSelector2nd = CardSelector
                     .builder()
@@ -184,8 +182,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                     .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                     .build()
 
-                cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                    .createPoCardSelection(cardSelector2nd, false))
+                cardSelectionsService.prepareSelection(GenericCardExtensionProvider.getService().createGenericCardSelection(cardSelector2nd))
 
                 val cardSelector3rd = CardSelector
                     .builder()
@@ -195,8 +192,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                     .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                     .build()
 
-                cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                    .createPoCardSelection(cardSelector3rd, false))
+                cardSelectionsService.prepareSelection(GenericCardExtensionProvider.getService().createGenericCardSelection(cardSelector3rd))
 
                 addActionEvent("Calypso PO selection for prefix: $cardAidPrefix")
 
@@ -261,8 +257,8 @@ class CoreExamplesActivity : AbstractExampleActivity() {
             /*
             * Add the selection case to the current selection (we could have added other cases here)
             */
-            cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                    .createPoCardSelection(cardSelector, false))
+            cardSelectionsService.prepareSelection(GenericCardExtensionProvider.getService().createGenericCardSelection(cardSelector))
+
             cardSelectionsService.scheduleCardSelectionScenario(reader as ObservableReader, ObservableReader.NotificationMode.MATCHED_ONLY)
 
             useCase = object : UseCase {
@@ -310,6 +306,14 @@ class CoreExamplesActivity : AbstractExampleActivity() {
 
             if (isCardPresent) {
 
+                val smartCardService = SmartCardServiceProvider.getService()
+
+                // Get the generic card extension service
+                val cardExtension = GenericCardExtensionProvider.getService()
+
+                // Verify that the extension's API level is consistent with the current service.
+                smartCardService.checkCardExtension(cardExtension)
+
                 /*
                  * Prepare the card selection
                  */
@@ -334,10 +338,14 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                         .build()
 
                 /**
+                 * Create a card selection using the generic card extension.
+                 */
+                val cardSelection = cardExtension.createGenericCardSelection(cardSelector)
+
+                /**
                  * Prepare Selection
                  */
-                cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                        .createPoCardSelection(cardSelector, false))
+                cardSelectionsService.prepareSelection(cardSelection)
                 /**
                  * Provide the Reader with the selection operation to be processed when a card is inserted.
                  */
