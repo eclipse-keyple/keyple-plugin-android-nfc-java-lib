@@ -14,8 +14,8 @@ package org.eclipse.keyple.card.generic;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.keyple.core.card.*;
-import org.eclipse.keyple.core.service.CardResource;
 import org.eclipse.keyple.core.service.Reader;
+import org.eclipse.keyple.core.service.resource.CardResource;
 import org.eclipse.keyple.core.util.Assert;
 import org.eclipse.keyple.core.util.ByteArrayUtil;
 
