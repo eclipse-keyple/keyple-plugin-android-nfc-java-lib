@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
         setSupportActionBar(toolbar)
         val actionBar = supportActionBar
-        actionBar?.title = "Android NFC Plugin"
+        actionBar?.title = getString(R.string.app_name)
         actionBar?.subtitle = "Example application"
 
         coreExamplesButton.setOnClickListener(this)

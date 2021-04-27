@@ -22,12 +22,14 @@ import org.eclipse.keyple.core.plugin.CardIOException
 import org.eclipse.keyple.core.plugin.ReaderIOException
 import org.eclipse.keyple.core.plugin.WaitForCardInsertionAutonomousReaderApi
 import org.eclipse.keyple.core.plugin.WaitForCardRemovalAutonomousReaderApi
+import org.eclipse.keyple.core.plugin.spi.reader.observable.ObservableReaderSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.state.insertion.WaitForCardInsertionAutonomousSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.state.processing.DontWaitForCardRemovalDuringProcessingSpi
 import org.eclipse.keyple.core.util.ByteArrayUtil
 import timber.log.Timber
 
 internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : AndroidNfcReader,
+        ObservableReaderSpi,
         WaitForCardInsertionAutonomousSpi,
         DontWaitForCardRemovalDuringProcessingSpi,
         NfcAdapter.ReaderCallback {
@@ -37,9 +39,9 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     private var tagProxy: TagProxy? = null
     protected var nfcAdapter: NfcAdapter? = null
 
-    private var mPresenceCheckDelay: Int? = null
-    private var mNoPlateformSound: Boolean? = null
-    private var mSkipNdefCheck: Boolean? = null
+    private var mPresenceCheckDelay: Int? = 100
+    private var mNoPlateformSound: Boolean? = false
+    private var mSkipNdefCheck: Boolean? = false
 
     lateinit var waitForCardInsertionAutonomousReaderApi: WaitForCardInsertionAutonomousReaderApi
     lateinit var waitForCardRemovalAutonomousReaderApi: WaitForCardRemovalAutonomousReaderApi
@@ -191,7 +193,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      *
      * @since 2.0
      */
-    @Throws(IllegalArgumentException::class, ReaderIOException::class, CardIOException::class)
+    @Throws(IllegalArgumentException::class, CardIOException::class)
     override fun transmitApdu(apduIn: ByteArray): ByteArray {
         Timber.d("Send data to card : ${apduIn.size} bytes")
         return with(tagProxy) {
@@ -211,7 +213,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
                         bytes
                     }
                 } catch (e: IOException) {
-                    throw ReaderIOException(
+                    throw CardIOException(
                             "Error while transmitting APDU, invalid out data buffer", e
                     )
                 } catch (e: NoSuchElementException) {

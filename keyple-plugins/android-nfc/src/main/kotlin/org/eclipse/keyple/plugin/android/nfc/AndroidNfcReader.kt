@@ -15,7 +15,7 @@ import android.content.Intent
 import org.eclipse.keyple.core.common.KeypleReaderExtension
 import org.eclipse.keyple.core.plugin.spi.reader.observable.ObservableReaderSpi
 
-interface AndroidNfcReader : KeypleReaderExtension, ObservableReaderSpi {
+interface AndroidNfcReader : KeypleReaderExtension {
 
     companion object {
         val READER_NAME = "AndroidNfcReader"

@@ -352,10 +352,12 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                                 } else {
                                     addResultEvent("The selection of the card has failed. Should not have occurred due to the MATCHED_ONLY selection mode.")
                                 }
+                                (reader as ObservableReader).finalizeCardProcessing()
                             }
 
                             ReaderEvent.EventType.CARD_INSERTED -> {
                                 addResultEvent("CARD_INSERTED event: should not have occurred due to the MATCHED_ONLY selection mode.")
+                                (reader as ObservableReader).finalizeCardProcessing()
                             }
 
                             ReaderEvent.EventType.CARD_REMOVED -> {
