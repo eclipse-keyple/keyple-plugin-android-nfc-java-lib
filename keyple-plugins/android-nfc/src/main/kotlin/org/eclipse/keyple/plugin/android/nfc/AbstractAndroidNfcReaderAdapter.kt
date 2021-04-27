@@ -289,13 +289,12 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      *
      * @since 2.0
      */
-    @Throws(IllegalStateException::class)
     override fun isProtocolSupported(readerProtocol: String): Boolean {
         return try {
                 AndroidNfcSupportedProtocols.values().first { it.name == readerProtocol }
                 true
             } catch (e: NoSuchElementException) {
-                throw IllegalStateException("Unsupported protocol $readerProtocol")
+                false
             }
     }
 

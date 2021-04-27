@@ -12,7 +12,7 @@
 package org.eclipse.keyple.card.generic;
 
 import org.eclipse.keyple.core.common.KeypleCardExtension;
-import org.eclipse.keyple.core.service.CardResource;
+import org.eclipse.keyple.core.service.resource.CardResource;
 import org.eclipse.keyple.core.service.selection.CardSelector;
 import org.eclipse.keyple.core.service.selection.spi.CardSelection;
 
