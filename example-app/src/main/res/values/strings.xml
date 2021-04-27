@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Keyple Android NFC</string>
+    <string name="app_name">Keyple V2 Plugin Android NFC</string>
     <string name="open_navigation_drawer">Open menu</string>
     <string name="close_navigation_drawer">Close Menu</string>
     <string name="alert_dialog_title">NFC Error</string>

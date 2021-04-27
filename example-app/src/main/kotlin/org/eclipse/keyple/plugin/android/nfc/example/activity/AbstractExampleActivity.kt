@@ -32,6 +32,7 @@ import org.eclipse.keyple.core.service.ReaderEvent
 import org.eclipse.keyple.core.service.SmartCardServiceProvider
 import org.eclipse.keyple.core.service.selection.CardSelectionService
 import org.eclipse.keyple.core.service.selection.spi.SmartCard
+import org.eclipse.keyple.core.service.spi.ReaderObservationExceptionHandlerSpi
 import org.eclipse.keyple.core.service.spi.ReaderObserverSpi
 import org.eclipse.keyple.core.util.ByteArrayUtil
 import org.eclipse.keyple.core.util.protocol.ContactlessCardCommonProtocol
@@ -43,7 +44,7 @@ import org.eclipse.keyple.plugin.android.nfc.example.model.ChoiceEventModel
 import org.eclipse.keyple.plugin.android.nfc.example.model.EventModel
 import timber.log.Timber
 
-abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, ReaderObserverSpi {
+abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, ReaderObserverSpi, ReaderObservationExceptionHandlerSpi {
 
     /**
      * Use to modify event update behaviour regarding current use case execution
@@ -92,18 +93,13 @@ abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnN
         /**
          * Configure Nfc Reader
          */
-        with(plugin.readers.values.first() as AndroidNfcReader) {
-            presenceCheckDelay = 100
-            noPlateformSound = false
-            skipNdefCheck = false
+        with(plugin.readers.values.first() as ObservableReader) {
+            setReaderObservationExceptionHandler(this@AbstractExampleActivity)
+            addObserver(this@AbstractExampleActivity)
+
             // with this protocol settings we activate the nfc for ISO1443_4 protocol
-            activateProtocol(ContactlessCardCommonProtocol.ISO_14443_4.name)
-            with(this as ObservableReader) {
-                addObserver(this@AbstractExampleActivity)
-                setReaderObservationExceptionHandler { pluginName, readerName, e ->
-                    Timber.e("An unexpected reader error occurred: $pluginName:$readerName : $e")
-                }
-            }
+            activateProtocol(ContactlessCardCommonProtocol.ISO_14443_4.name, ContactlessCardCommonProtocol.ISO_14443_4.name)
+            reader = this
         }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
@@ -196,5 +192,9 @@ abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnN
                 "(indexed $index): \n\t\t" +
                 "ATR: ${atr}\n\t\t" +
                 "FCI: $fci"
+    }
+
+    override fun onReaderObservationError(pluginName: String?, readerName: String?, e: Throwable?) {
+        Timber.e(e, "--Reader Observation Exception %s: %s", pluginName, readerName)
     }
 }
