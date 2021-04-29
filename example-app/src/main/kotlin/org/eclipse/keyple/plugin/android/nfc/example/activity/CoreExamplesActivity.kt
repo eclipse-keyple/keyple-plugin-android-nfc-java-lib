@@ -40,6 +40,9 @@ class CoreExamplesActivity : AbstractExampleActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (!drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.openDrawer(GravityCompat.START)
+        }
         (reader as ObservableReader).startCardDetection(ObservableReader.PollingMode.REPEATING)
     }
 
