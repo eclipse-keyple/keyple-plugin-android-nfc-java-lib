@@ -37,7 +37,6 @@ import org.eclipse.keyple.core.service.spi.ReaderObserverSpi
 import org.eclipse.keyple.core.util.ByteArrayUtil
 import org.eclipse.keyple.core.util.protocol.ContactlessCardCommonProtocol
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcPluginFactoryAdapter
-import org.eclipse.keyple.plugin.android.nfc.AndroidNfcReader
 import org.eclipse.keyple.plugin.android.nfc.example.R
 import org.eclipse.keyple.plugin.android.nfc.example.adapter.EventAdapter
 import org.eclipse.keyple.plugin.android.nfc.example.model.ChoiceEventModel
@@ -64,6 +63,11 @@ abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnN
 
     protected var useCase: UseCase? = null
     protected lateinit var cardSelectionsService: CardSelectionService
+
+    /**
+     * Specif initialisation of implementing activities
+     */
+    abstract fun initContentView()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -164,8 +168,6 @@ abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnN
             }
         }
     }
-
-    abstract fun initContentView()
 
     override fun onDestroy() {
         SmartCardServiceProvider.getService().plugins.forEach {

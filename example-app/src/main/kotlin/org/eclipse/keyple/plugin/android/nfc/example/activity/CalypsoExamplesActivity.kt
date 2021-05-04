@@ -21,9 +21,8 @@ import kotlinx.android.synthetic.main.activity_calypso_examples.toolbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.eclipse.keyple.card.calypso.CalypsoCardExtensionProvider
-import org.eclipse.keyple.card.calypso.po.PoSmartCard
-import org.eclipse.keyple.core.common.KeypleCardSelectionResponse
+import org.eclipse.keyple.card.calypso.CalypsoExtensionServiceProvider
+import org.eclipse.keyple.card.calypso.card.CalypsoCard
 import org.eclipse.keyple.core.service.CardSelectionServiceFactory
 import org.eclipse.keyple.core.service.KeypleCardCommunicationException
 import org.eclipse.keyple.core.service.KeypleReaderCommunicationException
@@ -33,6 +32,7 @@ import org.eclipse.keyple.core.service.ReaderEvent
 import org.eclipse.keyple.core.service.selection.CardSelectionService
 import org.eclipse.keyple.core.service.selection.CardSelector
 import org.eclipse.keyple.core.service.selection.MultiSelectionProcessing
+import org.eclipse.keyple.core.service.selection.ScheduledCardSelectionsResponse
 import org.eclipse.keyple.core.util.ByteArrayUtil
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcReader
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcSupportedProtocols
@@ -41,7 +41,7 @@ import org.eclipse.keyple.plugin.android.nfc.example.util.CalypsoClassicInfo
 import timber.log.Timber
 
 /**
- * Example of @[SmartCardService] implementation based on the @[AndroidNfcPlugin]
+ * Examples of Keyple API usage relying on keyple-java-plugin-android-nfc and keyple-java-card-calypso
  *
  * By default the plugin only listens to events when your application activity is in the foreground.
  * To activate NFC events while you application is not in the foreground, add the following
@@ -56,7 +56,10 @@ import timber.log.Timber
  */
 class CalypsoExamplesActivity : AbstractExampleActivity() {
 
-    private var readEnvironmentParserIndex: Int = 0
+    override fun initContentView() {
+        setContentView(R.layout.activity_calypso_examples)
+        initActionBar(toolbar, "NFC Plugins", "Calypso Examples")
+    }
 
     override fun onResume() {
         super.onResume()
@@ -84,7 +87,9 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
 
     override fun onPause() {
         Timber.i("on Pause Fragment - Stopping Read Write Mode")
-        // notify reader that card detection has been switched off
+        /**
+         * notify reader that card detection has been switched off
+         */
         (reader as ObservableReader).stopCardDetection()
 
         super.onPause()
@@ -132,11 +137,6 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
         return true
     }
 
-    override fun initContentView() {
-        setContentView(R.layout.activity_calypso_examples)
-        initActionBar(toolbar, "NFC Plugins", "Calypso Examples")
-    }
-
     private fun configureUseCase4SequentialMultiSelection() {
         addHeaderEvent("UseCase Generic #4: AID based sequential explicit multiple selection")
         addHeaderEvent("Reader  NAME = ${reader.name}")
@@ -144,16 +144,20 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
         with(reader as ObservableReader) {
             if (isCardPresent) {
 
-                /*
-                  * operate card AID selection (change the AID prefix here to adapt it to the card used for
-                  * the test [the card should have at least two applications matching the AID prefix])
-                  */
+                /**
+                 * operate card AID selection (change the AID prefix here to adapt it to the card used for
+                 * the test [the card should have at least two applications matching the AID prefix])
+                 */
                 val cardAidPrefix = CalypsoClassicInfo.AID_PREFIX
 
-                /* First selection case */
+                /**
+                 * First selection case
+                 */
                 cardSelectionsService = CardSelectionServiceFactory.getService(MultiSelectionProcessing.FIRST_MATCH)
 
-                /* AID based selection (1st selection, later indexed 0) */
+                /**
+                 * AID based selection (1st selection, later indexed 0)
+                 */
                 val selectionRequest1st = CardSelector
                         .builder()
                         .filterByDfName(cardAidPrefix)
@@ -162,24 +166,32 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                         .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                         .build()
 
-                /* AID based selection (1st selection, later indexed 0) */
-                cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                        .createPoCardSelection(selectionRequest1st, false))
+                /**
+                 * AID based selection (1st selection, later indexed 0)
+                 */
+                cardSelectionsService.prepareSelection(CalypsoExtensionServiceProvider.getService()
+                        .createCardSelection(selectionRequest1st, false))
 
-                /* Do the selection and display the result */
-                addActionEvent("FIRST MATCH Calypso PO selection for prefix: $cardAidPrefix")
+                /**
+                 * Do the selection and display the result
+                 */
+                addActionEvent("FIRST MATCH Calypso Card selection for prefix: $cardAidPrefix")
                 doAndAnalyseSelection(this, cardSelectionsService, 1)
 
-                /*
-                  * New selection: get the next application occurrence matching the same AID, close the
-                  * physical channel after
-                  */
+                /**
+                 * New selection: get the next application occurrence matching the same AID, close the
+                 * physical channel after
+                 */
                 cardSelectionsService = CardSelectionServiceFactory.getService(MultiSelectionProcessing.FIRST_MATCH)
 
-                /* Close the channel after the selection */
+                /**
+                 * Close the channel after the selection
+                 */
                 cardSelectionsService.prepareReleaseChannel()
 
-                /* next selection (2nd selection, later indexed 1) */
+                /**
+                 * next selection (2nd selection, later indexed 1)
+                 */
                 val cardSelectorNext = CardSelector
                         .builder()
                         .filterByDfName(cardAidPrefix)
@@ -188,11 +200,13 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                         .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                         .build()
 
-                cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                        .createPoCardSelection(cardSelectorNext, false))
+                cardSelectionsService.prepareSelection(CalypsoExtensionServiceProvider.getService()
+                        .createCardSelection(cardSelectorNext, false))
 
-                /* Do the selection and display the result */
-                addActionEvent("NEXT MATCH Calypso PO selection for prefix: $cardAidPrefix")
+                /**
+                 * Do the selection and display the result
+                 */
+                addActionEvent("NEXT MATCH Calypso Card selection for prefix: $cardAidPrefix")
                 doAndAnalyseSelection(this, cardSelectionsService, 2)
             } else {
                 addResultEvent("No cards were detected.")
@@ -225,10 +239,14 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
             if (isCardPresent) {
                 cardSelectionsService = CardSelectionServiceFactory.getService(MultiSelectionProcessing.PROCESS_ALL)
 
-                /* operate card selection (change the AID here to adapt it to the card used for the test) */
+                /**
+                 * operate card selection (change the AID here to adapt it to the card used for the test)
+                 */
                 val cardAidPrefix = CalypsoClassicInfo.AID_PREFIX
 
-                /* Close the channel after the selection to force the selection of all applications */
+                /**
+                 * Close the channel after the selection to force the selection of all applications
+                 */
                 cardSelectionsService.prepareReleaseChannel()
 
                 val selectionRequest1st = CardSelector
@@ -239,8 +257,8 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                         .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                         .build()
 
-                cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                        .createPoCardSelection(selectionRequest1st, false))
+                cardSelectionsService.prepareSelection(CalypsoExtensionServiceProvider.getService()
+                        .createCardSelection(selectionRequest1st, false))
 
                 val cardSelector2nd = CardSelector
                         .builder()
@@ -250,8 +268,8 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                         .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                         .build()
 
-                cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                        .createPoCardSelection(cardSelector2nd, false))
+                cardSelectionsService.prepareSelection(CalypsoExtensionServiceProvider.getService()
+                        .createCardSelection(cardSelector2nd, false))
 
                 val cardSelector3rd = CardSelector
                         .builder()
@@ -261,19 +279,19 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                         .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                         .build()
 
-                cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                        .createPoCardSelection(cardSelector3rd, false))
+                cardSelectionsService.prepareSelection(CalypsoExtensionServiceProvider.getService()
+                        .createCardSelection(cardSelector3rd, false))
 
                 /**
                  * We won't be listening for event update within this use case
                  */
                 useCase = null
 
-                addActionEvent("Calypso PO selection for prefix: $cardAidPrefix")
+                addActionEvent("Calypso Card selection for prefix: $cardAidPrefix")
 
-                /*
-                * Actual card communication: operate through a single request the card selection
-                */
+                /**
+                 * Actual card communication: operate through a single request the card selection
+                 */
                 try {
                     val selectionResult = cardSelectionsService.processCardSelectionScenario(this)
 
@@ -309,20 +327,20 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
         with(reader as ObservableReader) {
             addHeaderEvent("Reader  NAME = $name")
 
-            /*
-            * Prepare a card selection
-            */
+            /**
+             * Prepare a card selection
+             */
             cardSelectionsService = CardSelectionServiceFactory.getService()
 
-            /*
-            * Setting of an AID based selection
-            *
-            * Select the first application matching the selection AID whatever the card communication
-            * protocol keep the logical channel open after the selection
-            */
+            /**
+             * Setting of an AID based selection
+             *
+             * Select the first application matching the selection AID whatever the card communication
+             * protocol keep the logical channel open after the selection
+             */
             val aid = CalypsoClassicInfo.AID
 
-            /*
+            /**
              * Generic selection: configures a CardSelector with all the desired attributes to make the
              * selection
              */
@@ -332,11 +350,10 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                     .filterByCardProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
                     .build()
 
-            /*
-            * Add the selection case to the current selection (we could have added other cases here)
-            */
-            cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                    .createPoCardSelection(cardSelector, false))
+            /**
+             * Add the selection case to the current selection (we could have added other cases here)
+             */
+            cardSelectionsService.prepareSelection(CalypsoExtensionServiceProvider.getService().createCardSelection(cardSelector, false))
             cardSelectionsService.scheduleCardSelectionScenario(reader as ObservableReader, ObservableReader.NotificationMode.MATCHED_ONLY)
 
             useCase = object : UseCase {
@@ -345,7 +362,7 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                         when (event?.eventType) {
                             ReaderEvent.EventType.CARD_MATCHED -> {
                                 addResultEvent("CARD_MATCHED event: A card corresponding to request has been detected")
-                                val selectedCard = cardSelectionsService.processCardSelectionResponses(event.cardSelectionResponses).activeSmartCard
+                                val selectedCard = cardSelectionsService.parseScheduledCardSelectionsResponse(event.scheduledCardSelectionsResponse).activeSmartCard
                                 if (selectedCard != null) {
                                     addResultEvent("Observer notification: the selection of the card has succeeded. End of the card processing.")
                                     addResultEvent("Application FCI = ${ByteArrayUtil.toHex(selectedCard.fciBytes)}")
@@ -361,7 +378,7 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                             }
 
                             ReaderEvent.EventType.CARD_REMOVED -> {
-                                addResultEvent("CARD_REMOVED event: There is no PO inserted anymore. Return to the waiting state...")
+                                addResultEvent("CARD_REMOVED event: There is no Card inserted anymore. Return to the waiting state...")
                             }
 
                             else -> {
@@ -383,7 +400,7 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
             addHeaderEvent("Reader  NAME = $name")
 
             if (isCardPresent) {
-                /*
+                /**
                  * Prepare the card selection
                  */
                 cardSelectionsService = CardSelectionServiceFactory.getService()
@@ -391,15 +408,15 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                 /* Close the channel after the selection */
                 cardSelectionsService.prepareReleaseChannel()
 
-                /*
-                 * Setting of an AID based selection (in this example a Calypso REV3 PO)
+                /**
+                 * Setting of an AID based selection (in this example a Calypso REV3 Card)
                  *
                  * Select the first application matching the selection AID whatever the card communication
                  * protocol keep the logical channel open after the selection
                  */
                 val aid = CalypsoClassicInfo.AID
 
-                /*
+                /**
                  * Generic selection: configures a CardSelector with all the desired attributes to make
                  * the selection and read additional information afterwards
                  */
@@ -412,8 +429,7 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                 /**
                  * Prepare Selection
                  */
-                cardSelectionsService.prepareSelection(CalypsoCardExtensionProvider.getService()
-                        .createPoCardSelection(cardSelector, false))
+                cardSelectionsService.prepareSelection(CalypsoExtensionServiceProvider.getService().createCardSelection(cardSelector, false))
 
                 /**
                  * Provide the Reader with the selection operation to be processed when a card is inserted.
@@ -425,7 +441,7 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                  */
                 useCase = null
 
-                addActionEvent("Calypso PO selection: $aid")
+                addActionEvent("Calypso Card selection: $aid")
                 try {
                     val cardSelectionsResult = cardSelectionsService.processCardSelectionScenario(this)
 
@@ -457,21 +473,20 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
 
         with(reader as ObservableReader) {
             addHeaderEvent("Reader  NAME = $name")
-            // define task as an observer for ReaderEvents
-            /*
-             * Prepare a a new Calypso PO selection
+            /**
+             * Prepare a a new Calypso Card selection
              */
             cardSelectionsService = CardSelectionServiceFactory.getService()
 
-            /*
-              * Setting of an AID based selection (in this example a Calypso REV3 PO)
+            /**
+              * Setting of an AID based selection (in this example a Calypso REV3 Card)
               *
               * Select the first application matching the selection AID whatever the card communication
               * protocol keep the logical channel open after the selection
               */
             val aid = CalypsoClassicInfo.AID
 
-            /*
+            /**
              * Generic selection: configures a CardSelector with all the desired attributes to make
              * the selection and read additional information afterwards
              */
@@ -481,7 +496,7 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                     .filterByCardProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
                     .build()
 
-            val cardSelection = CalypsoCardExtensionProvider.getService().createPoCardSelection(cardSelector, false)
+            val cardSelection = CalypsoExtensionServiceProvider.getService().createCardSelection(cardSelector, false)
 
             cardSelection.prepareReadRecordFile(
                     CalypsoClassicInfo.SFI_EnvironmentAndHolder,
@@ -502,12 +517,12 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
                         when (event?.eventType) {
                             ReaderEvent.EventType.CARD_MATCHED -> {
                                 addResultEvent("Tag detected - card MATCHED")
-                                executeCommands(event.cardSelectionResponses)
+                                executeCommands(event.scheduledCardSelectionsResponse)
                                 (this as ObservableReader).finalizeCardProcessing()
                             }
 
                             ReaderEvent.EventType.CARD_INSERTED -> {
-                                addResultEvent("PO detected but AID didn't match with ${CalypsoClassicInfo.AID}")
+                                addResultEvent("Card detected but AID didn't match with ${CalypsoClassicInfo.AID}")
                                 (this as ObservableReader).finalizeCardProcessing()
                             }
 
@@ -531,65 +546,64 @@ class CalypsoExamplesActivity : AbstractExampleActivity() {
     /**
      * Run Calypso simple read transaction
      *
-     * @param keypleCardSelectionsResponse
+     * @param scheduledCardSelectionsResponse
      */
-    private fun executeCommands(keypleCardSelectionsResponse: List<KeypleCardSelectionResponse>) {
-
-        // addHeaderEvent("Running Calypso Simple Read transaction")
-
+    private fun executeCommands(scheduledCardSelectionsResponse: ScheduledCardSelectionsResponse) {
         try {
-            /*
+            /**
              * print tag info in View
              */
             addHeaderEvent("Tag Id : ${(reader as AndroidNfcReader).printTagId()}")
-            val cardSelectionsResult = cardSelectionsService.processCardSelectionResponses(keypleCardSelectionsResponse)
-            addResultEvent("1st PO exchange: aid selection")
+            val cardSelectionsResult = cardSelectionsService.parseScheduledCardSelectionsResponse(scheduledCardSelectionsResponse)
+            addResultEvent("1st Card exchange: aid selection")
 
             if (cardSelectionsResult.hasActiveSelection()) {
-                val calypsoPo = cardSelectionsResult.activeSmartCard as PoSmartCard
+                val calypsoPo = cardSelectionsResult.activeSmartCard as CalypsoCard
 
-                addResultEvent("Calypso PO selection: ")
+                addResultEvent("Calypso Card selection: ")
                 addResultEvent("AID: ${ByteArrayUtil.fromHex(CalypsoClassicInfo.AID)}")
 
-                /*
+                /**
                  * Retrieve the data read from the parser updated during the selection process
                  */
 
                 val environmentAndHolder = calypsoPo.getFileBySfi(CalypsoClassicInfo.SFI_EnvironmentAndHolder).data.content
                 addResultEvent("Environment file data: ${ByteArrayUtil.toHex(environmentAndHolder)}")
 
-                addResultEvent("2nd PO exchange: read the event log file")
-                val calypsoCardExtensionProvider = CalypsoCardExtensionProvider.getService()
-                val poTransaction = calypsoCardExtensionProvider.createPoUnsecuredTransaction(reader, calypsoPo)
+                addResultEvent("2nd Card exchange: read the event log file")
+                val calypsoExtensionServiceProvider = CalypsoExtensionServiceProvider.getService()
+                val cardTransactionService = calypsoExtensionServiceProvider.createCardTransactionWithoutSecurity(reader, calypsoPo)
 
-                /*
+                /**
                  * Prepare the reading order and keep the associated parser for later use once the
                  * transaction has been processed.
                  */
-                poTransaction.prepareReadRecordFile(
+                cardTransactionService.prepareReadRecordFile(
                         CalypsoClassicInfo.SFI_EventLog,
                         CalypsoClassicInfo.RECORD_NUMBER_1.toInt())
 
-                /*
-                 * Actual PO communication: send the prepared read order, then close the channel
-                 * with the PO
+                /**
+                 * Actual Card communication: send the prepared read order, then close the channel
+                 * with the Card
                  */
-                addActionEvent("processPoCommands")
-                poTransaction.prepareReleasePoChannel()
-                poTransaction.processPoCommands()
+                addActionEvent("processCardCommands")
+                cardTransactionService.prepareReleaseCardChannel()
+                cardTransactionService.processCardCommands()
                 addResultEvent("SUCCESS")
 
-                /*
+                /**
                  * Retrieve the data read from the parser updated during the transaction process
                  */
                 val eventLog = calypsoPo.getFileBySfi(CalypsoClassicInfo.SFI_EventLog).data.content
 
-                /* Log the result */
+                /**
+                 * Log the result
+                 */
                 addResultEvent("EventLog file: ${ByteArrayUtil.toHex(eventLog)}")
-                addResultEvent("End of the Calypso PO processing.")
+                addResultEvent("End of the Calypso Card processing.")
                 addResultEvent("You can remove the card now")
             } else {
-                addResultEvent("The selection of the PO has failed. Should not have occurred due to the MATCHED_ONLY selection mode.")
+                addResultEvent("The selection of the Card has failed. Should not have occurred due to the MATCHED_ONLY selection mode.")
             }
         } catch (e: KeypleReaderCommunicationException) {
             Timber.e(e)

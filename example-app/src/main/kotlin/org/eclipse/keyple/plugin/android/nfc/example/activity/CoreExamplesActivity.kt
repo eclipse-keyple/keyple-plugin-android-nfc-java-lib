@@ -19,7 +19,7 @@ import kotlinx.android.synthetic.main.activity_core_examples.toolbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.eclipse.keyple.card.generic.GenericCardExtensionProvider
+import org.eclipse.keyple.card.generic.GenericExtensionServiceProvider
 import org.eclipse.keyple.core.service.CardSelectionServiceFactory
 import org.eclipse.keyple.core.service.KeypleCardCommunicationException
 import org.eclipse.keyple.core.service.KeypleReaderCommunicationException
@@ -36,7 +36,15 @@ import org.eclipse.keyple.plugin.android.nfc.example.R
 import org.eclipse.keyple.plugin.android.nfc.example.util.CalypsoClassicInfo
 import timber.log.Timber
 
+/**
+ * Examples of Keyple API usage relying on keyple-java-plugin-android-nfc
+ */
 class CoreExamplesActivity : AbstractExampleActivity() {
+
+    override fun initContentView() {
+        setContentView(R.layout.activity_core_examples)
+        initActionBar(toolbar, "NFC Plugins", "Core Examples")
+    }
 
     override fun onResume() {
         super.onResume()
@@ -44,11 +52,6 @@ class CoreExamplesActivity : AbstractExampleActivity() {
             drawerLayout.openDrawer(GravityCompat.START)
         }
         (reader as ObservableReader).startCardDetection(ObservableReader.PollingMode.REPEATING)
-    }
-
-    override fun initContentView() {
-        setContentView(R.layout.activity_core_examples)
-        initActionBar(toolbar, "NFC Plugins", "Core Examples")
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
@@ -82,13 +85,15 @@ class CoreExamplesActivity : AbstractExampleActivity() {
         with(reader as ObservableReader) {
             addHeaderEvent("Reader  NAME = $name")
             if (isCardPresent) {
-                /*
-              * operate card AID selection (change the AID prefix here to adapt it to the card used for
-              * the test [the card should have at least two applications matching the AID prefix])
-              */
+                /**
+                 * operate card AID selection (change the AID prefix here to adapt it to the card used for
+                 * the test [the card should have at least two applications matching the AID prefix])
+                 */
                 val cardAidPrefix = CalypsoClassicInfo.AID_PREFIX
 
-                /* First selection case */
+                /**
+                 *  First selection case
+                 */
                 cardSelectionsService = CardSelectionServiceFactory.getService(MultiSelectionProcessing.FIRST_MATCH)
 
                 val cardSelectorFirst = CardSelector
@@ -99,22 +104,28 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                     .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                     .build()
 
-                cardSelectionsService.prepareSelection(GenericCardExtensionProvider.getService().createGenericCardSelection(cardSelectorFirst))
+                cardSelectionsService.prepareSelection(GenericExtensionServiceProvider.getService().createCardSelection(cardSelectorFirst))
 
-                /* Do the selection and display the result */
+                /**
+                 * Do the selection and display the result
+                 */
                 addActionEvent("FIRST MATCH Calypso PO selection for prefix: $cardAidPrefix")
                 doAndAnalyseSelection(this, cardSelectionsService, 1)
 
-                /*
-                  * New selection: get the next application occurrence matching the same AID, close the
-                  * physical channel after
-                  */
+                /**
+                 * New selection: get the next application occurrence matching the same AID, close the
+                 * physical channel after
+                 */
                 cardSelectionsService = CardSelectionServiceFactory.getService(MultiSelectionProcessing.FIRST_MATCH)
 
-                /* Close the channel after the selection */
+                /**
+                 * Close the channel after the selection
+                 */
                 cardSelectionsService.prepareReleaseChannel()
 
-                /* next selection (2nd selection, later indexed 1) */
+                /**
+                 *  next selection (2nd selection, later indexed 1)
+                 */
                 val cardSelectorNext = CardSelector
                     .builder()
                     .filterByDfName(cardAidPrefix)
@@ -123,9 +134,11 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                     .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                     .build()
 
-                cardSelectionsService.prepareSelection(GenericCardExtensionProvider.getService().createGenericCardSelection(cardSelectorNext))
+                cardSelectionsService.prepareSelection(GenericExtensionServiceProvider.getService().createCardSelection(cardSelectorNext))
 
-                /* Do the selection and display the result */
+                /**
+                 * Do the selection and display the result
+                 */
                 addActionEvent("NEXT MATCH Calypso PO selection for prefix: $cardAidPrefix")
                 doAndAnalyseSelection(this, cardSelectionsService, 2)
             } else {
@@ -161,10 +174,14 @@ class CoreExamplesActivity : AbstractExampleActivity() {
             if (isCardPresent) {
                 cardSelectionsService = CardSelectionServiceFactory.getService(MultiSelectionProcessing.PROCESS_ALL)
 
-                /* Close the channel after the selection to force the selection of all applications */
+                /**
+                 * Close the channel after the selection to force the selection of all applications
+                 */
                 cardSelectionsService.prepareReleaseChannel()
 
-                /* operate card selection (change the AID here to adapt it to the card used for the test) */
+                /**
+                 * operate card selection (change the AID here to adapt it to the card used for the test)
+                 */
                 val cardAidPrefix = CalypsoClassicInfo.AID_PREFIX
 
                 val cardSelectorFirst = CardSelector
@@ -175,7 +192,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                     .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                     .build()
 
-                cardSelectionsService.prepareSelection(GenericCardExtensionProvider.getService().createGenericCardSelection(cardSelectorFirst))
+                cardSelectionsService.prepareSelection(GenericExtensionServiceProvider.getService().createCardSelection(cardSelectorFirst))
 
                 val cardSelector2nd = CardSelector
                     .builder()
@@ -185,7 +202,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                     .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                     .build()
 
-                cardSelectionsService.prepareSelection(GenericCardExtensionProvider.getService().createGenericCardSelection(cardSelector2nd))
+                cardSelectionsService.prepareSelection(GenericExtensionServiceProvider.getService().createCardSelection(cardSelector2nd))
 
                 val cardSelector3rd = CardSelector
                     .builder()
@@ -195,13 +212,13 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                     .setFileControlInformation(CardSelector.FileControlInformation.FCI)
                     .build()
 
-                cardSelectionsService.prepareSelection(GenericCardExtensionProvider.getService().createGenericCardSelection(cardSelector3rd))
+                cardSelectionsService.prepareSelection(GenericExtensionServiceProvider.getService().createCardSelection(cardSelector3rd))
 
                 addActionEvent("Calypso PO selection for prefix: $cardAidPrefix")
 
-                /*
-                * Actual card communication: operate through a single request the card selection
-                */
+                /**
+                 * Actual card communication: operate through a single request the card selection
+                 */
                 try {
                     val selectionResult = cardSelectionsService.processCardSelectionScenario(this)
 
@@ -234,20 +251,20 @@ class CoreExamplesActivity : AbstractExampleActivity() {
 
             addHeaderEvent("Reader  NAME = $name")
 
-            /*
-            * Prepare a card selection
-            */
+            /**
+             * Prepare a card selection
+             */
             cardSelectionsService = CardSelectionServiceFactory.getService()
 
-            /*
-            * Setting of an AID based selection
-            *
-            * Select the first application matching the selection AID whatever the card communication
-            * protocol keep the logical channel open after the selection
-            */
+            /**
+             * Setting of an AID based selection
+             *
+             * Select the first application matching the selection AID whatever the card communication
+             * protocol keep the logical channel open after the selection
+             */
             val aid = CalypsoClassicInfo.AID
 
-            /*
+            /**
              * Generic selection: configures a CardSelector with all the desired attributes to make the
              * selection
              */
@@ -257,10 +274,10 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                     .filterByCardProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
                     .build()
 
-            /*
-            * Add the selection case to the current selection (we could have added other cases here)
-            */
-            cardSelectionsService.prepareSelection(GenericCardExtensionProvider.getService().createGenericCardSelection(cardSelector))
+            /**
+             * Add the selection case to the current selection (we could have added other cases here)
+             */
+            cardSelectionsService.prepareSelection(GenericExtensionServiceProvider.getService().createCardSelection(cardSelector))
 
             cardSelectionsService.scheduleCardSelectionScenario(reader as ObservableReader, ObservableReader.NotificationMode.MATCHED_ONLY)
 
@@ -270,7 +287,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                         when (event?.eventType) {
                             ReaderEvent.EventType.CARD_MATCHED -> {
                                 addResultEvent("CARD_MATCHED event: A card corresponding to request has been detected")
-                                val selectedCard = cardSelectionsService.processCardSelectionResponses(event.cardSelectionResponses).activeSmartCard
+                                val selectedCard = cardSelectionsService.parseScheduledCardSelectionsResponse(event.scheduledCardSelectionsResponse).activeSmartCard
                                 if (selectedCard != null) {
                                     addResultEvent("Observer notification: the selection of the card has succeeded. End of the card processing.")
                                     addResultEvent("Application FCI = ${ByteArrayUtil.toHex(selectedCard.fciBytes)}")
@@ -311,18 +328,22 @@ class CoreExamplesActivity : AbstractExampleActivity() {
 
                 val smartCardService = SmartCardServiceProvider.getService()
 
-                // Get the generic card extension service
-                val cardExtension = GenericCardExtensionProvider.getService()
+                /**
+                 * Get the generic card extension service
+                 */
+                val cardExtension = GenericExtensionServiceProvider.getService()
 
-                // Verify that the extension's API level is consistent with the current service.
+                /**
+                 * Verify that the extension's API level is consistent with the current service.
+                 */
                 smartCardService.checkCardExtension(cardExtension)
 
-                /*
+                /**
                  * Prepare the card selection
                  */
                 cardSelectionsService = CardSelectionServiceFactory.getService()
 
-                /*
+                /**
                  * Setting of an AID based selection (in this example a Calypso REV3 PO)
                  *
                  * Select the first application matching the selection AID whatever the card communication
@@ -330,7 +351,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                  */
                 val aid = CalypsoClassicInfo.AID
 
-                /*
+                /**
                  * Generic selection: configures a CardSelector with all the desired attributes to make
                  * the selection and read additional information afterwards
                  */
@@ -343,7 +364,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                 /**
                  * Create a card selection using the generic card extension.
                  */
-                val cardSelection = cardExtension.createGenericCardSelection(cardSelector)
+                val cardSelection = cardExtension.createCardSelection(cardSelector)
 
                 /**
                  * Prepare Selection
@@ -385,8 +406,8 @@ class CoreExamplesActivity : AbstractExampleActivity() {
         }
     }
 
-    override fun onReaderEvent(readerEvent: ReaderEvent?) {
-        Timber.i("New ReaderEvent received : $readerEvent")
+    override fun onReaderEvent(readerEvent: ReaderEvent) {
+        Timber.i("New ReaderEvent received : ${readerEvent.eventType}")
         useCase?.onEventUpdate(readerEvent)
     }
 }
