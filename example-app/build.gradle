@@ -50,7 +50,7 @@ dependencies {
     implementation "org.eclipse.keyple:keyple-java-card-calypso:2.0.0-SNAPSHOT"
 
     //For Generic Extension examples
-    implementation "org.eclipse.keyple:keyple-java-card-api:2.0-SNAPSHOT"
+    implementation "org.eclipse.keyple:keyple-java-card-generic:2.0.0-SNAPSHOT"
 
 
     /*
