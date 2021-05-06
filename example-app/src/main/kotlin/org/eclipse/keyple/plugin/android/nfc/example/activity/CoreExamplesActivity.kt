@@ -11,8 +11,11 @@
  ************************************************************************************** */
 package org.eclipse.keyple.plugin.android.nfc.example.activity
 
+import android.nfc.NfcAdapter
+import android.os.Bundle
 import android.view.MenuItem
 import androidx.core.view.GravityCompat
+import java.io.IOException
 import kotlinx.android.synthetic.main.activity_core_examples.drawerLayout
 import kotlinx.android.synthetic.main.activity_core_examples.eventRecyclerView
 import kotlinx.android.synthetic.main.activity_core_examples.toolbar
@@ -29,8 +32,12 @@ import org.eclipse.keyple.core.service.ReaderEvent
 import org.eclipse.keyple.core.service.SmartCardServiceProvider
 import org.eclipse.keyple.core.service.selection.CardSelectionService
 import org.eclipse.keyple.core.service.selection.CardSelector
-import org.eclipse.keyple.core.service.selection.MultiSelectionProcessing
+import org.eclipse.keyple.core.service.selection.spi.SmartCard
 import org.eclipse.keyple.core.util.ByteArrayUtil
+import org.eclipse.keyple.core.util.protocol.ContactlessCardCommonProtocol
+import org.eclipse.keyple.plugin.android.nfc.AndroidNfcPlugin
+import org.eclipse.keyple.plugin.android.nfc.AndroidNfcPluginFactoryAdapter
+import org.eclipse.keyple.plugin.android.nfc.AndroidNfcReader
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcSupportedProtocols
 import org.eclipse.keyple.plugin.android.nfc.example.R
 import org.eclipse.keyple.plugin.android.nfc.example.util.CalypsoClassicInfo
@@ -41,6 +48,34 @@ import timber.log.Timber
  */
 class CoreExamplesActivity : AbstractExampleActivity() {
 
+    protected lateinit var reader: Reader
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        /**
+         * Register AndroidNfc plugin Factory
+         */
+        val plugin = SmartCardServiceProvider.getService().registerPlugin(AndroidNfcPluginFactoryAdapter(this))
+
+        /**
+         * Configure Nfc Reader
+         */
+        with(plugin.getReader(AndroidNfcReader.READER_NAME) as ObservableReader) {
+            setReaderObservationExceptionHandler(this@CoreExamplesActivity)
+            addObserver(this@CoreExamplesActivity)
+
+            // with this protocol settings we activate the nfc for ISO1443_4 protocol
+            activateProtocol(ContactlessCardCommonProtocol.ISO_14443_4.name, ContactlessCardCommonProtocol.ISO_14443_4.name)
+            reader = this
+        }
+    }
+
+    override fun onDestroy() {
+        SmartCardServiceProvider.getService().unregisterPlugin(AndroidNfcPlugin.PLUGIN_NAME)
+        super.onDestroy()
+    }
+
     override fun initContentView() {
         setContentView(R.layout.activity_core_examples)
         initActionBar(toolbar, "NFC Plugins", "Core Examples")
@@ -48,10 +83,26 @@ class CoreExamplesActivity : AbstractExampleActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (!drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.openDrawer(GravityCompat.START)
+        try {
+            checkNfcAvailability()
+            if (intent.action != null && intent.action == NfcAdapter.ACTION_TECH_DISCOVERED) run {
+
+                Timber.d("Handle ACTION TECH intent")
+                // notify reader that card detection has been launched
+                (reader as ObservableReader).startCardDetection(ObservableReader.PollingMode.SINGLESHOT)
+                initFromBackgroundTextView()
+                (reader as AndroidNfcReader).processIntent(intent)
+                configureUseCase1ExplicitSelectionAid()
+            } else {
+                if (!drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.openDrawer(GravityCompat.START)
+                }
+                // enable detection
+                (reader as ObservableReader).startCardDetection(ObservableReader.PollingMode.SINGLESHOT)
+            }
+        } catch (e: IOException) {
+            showAlertDialog(e)
         }
-        (reader as ObservableReader).startCardDetection(ObservableReader.PollingMode.REPEATING)
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
@@ -59,93 +110,13 @@ class CoreExamplesActivity : AbstractExampleActivity() {
             drawerLayout.closeDrawer(GravityCompat.START)
         }
         when (item.itemId) {
-            R.id.usecase1 -> {
-                clearEvents()
-                configureUseCase1ExplicitSelectionAid()
-            }
             R.id.usecase2 -> {
                 clearEvents()
+                (reader as ObservableReader).startCardDetection(ObservableReader.PollingMode.REPEATING)
                 configureUseCase2DefaultSelectionNotification()
-            }
-            R.id.usecase3 -> {
-                clearEvents()
-                configureUseCase3GroupedMultiSelection()
-            }
-            R.id.usecase4 -> {
-                clearEvents()
-                configureUseCase4SequentialMultiSelection()
             }
         }
         return true
-    }
-
-    private fun configureUseCase4SequentialMultiSelection() {
-        addHeaderEvent("UseCase Generic #4: AID based sequential explicit multiple selection")
-
-        with(reader as ObservableReader) {
-            addHeaderEvent("Reader  NAME = $name")
-            if (isCardPresent) {
-                /**
-                 * operate card AID selection (change the AID prefix here to adapt it to the card used for
-                 * the test [the card should have at least two applications matching the AID prefix])
-                 */
-                val cardAidPrefix = CalypsoClassicInfo.AID_PREFIX
-
-                /**
-                 *  First selection case
-                 */
-                cardSelectionsService = CardSelectionServiceFactory.getService(MultiSelectionProcessing.FIRST_MATCH)
-
-                val cardSelectorFirst = CardSelector
-                    .builder()
-                    .filterByDfName(cardAidPrefix)
-                    .filterByCardProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
-                    .setFileOccurrence(CardSelector.FileOccurrence.FIRST)
-                    .setFileControlInformation(CardSelector.FileControlInformation.FCI)
-                    .build()
-
-                cardSelectionsService.prepareSelection(GenericExtensionServiceProvider.getService().createCardSelection(cardSelectorFirst))
-
-                /**
-                 * Do the selection and display the result
-                 */
-                addActionEvent("FIRST MATCH Calypso PO selection for prefix: $cardAidPrefix")
-                doAndAnalyseSelection(this, cardSelectionsService, 1)
-
-                /**
-                 * New selection: get the next application occurrence matching the same AID, close the
-                 * physical channel after
-                 */
-                cardSelectionsService = CardSelectionServiceFactory.getService(MultiSelectionProcessing.FIRST_MATCH)
-
-                /**
-                 * Close the channel after the selection
-                 */
-                cardSelectionsService.prepareReleaseChannel()
-
-                /**
-                 *  next selection (2nd selection, later indexed 1)
-                 */
-                val cardSelectorNext = CardSelector
-                    .builder()
-                    .filterByDfName(cardAidPrefix)
-                    .filterByCardProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
-                    .setFileOccurrence(CardSelector.FileOccurrence.NEXT)
-                    .setFileControlInformation(CardSelector.FileControlInformation.FCI)
-                    .build()
-
-                cardSelectionsService.prepareSelection(GenericExtensionServiceProvider.getService().createCardSelection(cardSelectorNext))
-
-                /**
-                 * Do the selection and display the result
-                 */
-                addActionEvent("NEXT MATCH Calypso PO selection for prefix: $cardAidPrefix")
-                doAndAnalyseSelection(this, cardSelectionsService, 2)
-            } else {
-                addResultEvent("No cards were detected.")
-            }
-            eventRecyclerView.smoothScrollToPosition(events.size - 1)
-        }
     }
 
     private fun doAndAnalyseSelection(reader: Reader?, cardSelectionsService: CardSelectionService, index: Int) {
@@ -162,86 +133,6 @@ class CoreExamplesActivity : AbstractExampleActivity() {
         } catch (e: KeypleReaderCommunicationException) {
             addResultEvent("Error: ${e.message}")
         }
-    }
-
-    private fun configureUseCase3GroupedMultiSelection() {
-        addHeaderEvent("UseCase Generic #3: AID based grouped explicit multiple selection")
-
-        useCase = null
-
-        with(reader as ObservableReader) {
-            addHeaderEvent("Reader  NAME = $name")
-            if (isCardPresent) {
-                cardSelectionsService = CardSelectionServiceFactory.getService(MultiSelectionProcessing.PROCESS_ALL)
-
-                /**
-                 * Close the channel after the selection to force the selection of all applications
-                 */
-                cardSelectionsService.prepareReleaseChannel()
-
-                /**
-                 * operate card selection (change the AID here to adapt it to the card used for the test)
-                 */
-                val cardAidPrefix = CalypsoClassicInfo.AID_PREFIX
-
-                val cardSelectorFirst = CardSelector
-                    .builder()
-                    .filterByDfName(cardAidPrefix)
-                    .filterByCardProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
-                    .setFileOccurrence(CardSelector.FileOccurrence.FIRST)
-                    .setFileControlInformation(CardSelector.FileControlInformation.FCI)
-                    .build()
-
-                cardSelectionsService.prepareSelection(GenericExtensionServiceProvider.getService().createCardSelection(cardSelectorFirst))
-
-                val cardSelector2nd = CardSelector
-                    .builder()
-                    .filterByDfName(cardAidPrefix)
-                    .filterByCardProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
-                    .setFileOccurrence(CardSelector.FileOccurrence.NEXT)
-                    .setFileControlInformation(CardSelector.FileControlInformation.FCI)
-                    .build()
-
-                cardSelectionsService.prepareSelection(GenericExtensionServiceProvider.getService().createCardSelection(cardSelector2nd))
-
-                val cardSelector3rd = CardSelector
-                    .builder()
-                    .filterByDfName(cardAidPrefix)
-                    .filterByCardProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
-                    .setFileOccurrence(CardSelector.FileOccurrence.NEXT)
-                    .setFileControlInformation(CardSelector.FileControlInformation.FCI)
-                    .build()
-
-                cardSelectionsService.prepareSelection(GenericExtensionServiceProvider.getService().createCardSelection(cardSelector3rd))
-
-                addActionEvent("Calypso PO selection for prefix: $cardAidPrefix")
-
-                /**
-                 * Actual card communication: operate through a single request the card selection
-                 */
-                try {
-                    val selectionResult = cardSelectionsService.processCardSelectionScenario(this)
-
-                    if (selectionResult.smartCards.isNotEmpty()) {
-                        selectionResult.smartCards.forEach {
-                            addResultEvent(getSmardCardInfos(it.value, it.key))
-                        }
-                        addResultEvent("End of selection")
-                    } else {
-                        addResultEvent("No cards matched the selection.")
-                        addResultEvent("The card must be in the field when starting this use case")
-                    }
-                } catch (e: KeypleCardCommunicationException) {
-                    addResultEvent("Error: ${e.message}")
-                } catch (e: KeypleReaderCommunicationException) {
-                    addResultEvent("Error: ${e.message}")
-                }
-            } else {
-                addResultEvent("No cards were detected.")
-            }
-        }
-
-        eventRecyclerView.smoothScrollToPosition(events.size - 1)
     }
 
     private fun configureUseCase2DefaultSelectionNotification() {
@@ -262,7 +153,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
              * Select the first application matching the selection AID whatever the card communication
              * protocol keep the logical channel open after the selection
              */
-            val aid = CalypsoClassicInfo.AID
+            val aid = CalypsoClassicInfo.AID_CD_LIGHT_GTML
 
             /**
              * Generic selection: configures a CardSelector with all the desired attributes to make the
@@ -349,7 +240,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                  * Select the first application matching the selection AID whatever the card communication
                  * protocol keep the logical channel open after the selection
                  */
-                val aid = CalypsoClassicInfo.AID
+                val aid = CalypsoClassicInfo.AID_CD_LIGHT_GTML
 
                 /**
                  * Generic selection: configures a CardSelector with all the desired attributes to make
@@ -404,6 +295,26 @@ class CoreExamplesActivity : AbstractExampleActivity() {
             }
             eventRecyclerView.smoothScrollToPosition(events.size - 1)
         }
+    }
+
+    private fun getSmardCardInfos(smartCard: SmartCard, index: Int): String {
+        val atr = try {
+            ByteArrayUtil.toHex(smartCard.atrBytes)
+        } catch (e: IllegalStateException) {
+            Timber.w(e)
+            e.message
+        }
+        val fci = try {
+            ByteArrayUtil.toHex(smartCard.fciBytes)
+        } catch (e: IllegalStateException) {
+            Timber.w(e)
+            e.message
+        }
+
+        return "Selection status for selection " +
+                "(indexed $index): \n\t\t" +
+                "ATR: ${atr}\n\t\t" +
+                "FCI: $fci"
     }
 
     override fun onReaderEvent(readerEvent: ReaderEvent) {
