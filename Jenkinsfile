@@ -23,37 +23,27 @@ pipeline {
     } } }
     stage('Build and Test:') {
       when { expression { !deploySnapshot && !deployRelease } }
-      parallel {
-        stage('Java 6') { steps { container('java-builder') {
-          sh './gradlew clean build -P javaSourceLevel=1.6 -P javaTargetLevel=1.6 -P buildDir=build-6 --no-build-cache --info'
-          junit testResults: 'build-6/test-results/test/*.xml', allowEmptyResults: true
-        } } }
-        stage('Java 8') { steps { container('java-builder') {
-          sh './gradlew clean build -P javaSourceLevel=1.8 -P javaTargetLevel=1.8 -P buildDir=build-8 --no-build-cache --info'
-          junit testResults: 'build-8/test-results/test/*.xml', allowEmptyResults: true
-        } } }
-        stage('Java 11') { steps { container('java-builder') {
-          sh './gradlew clean build -P javaSourceLevel=11 -P javaTargetLevel=11 -P buildDir=build-11 --no-build-cache --info'
-          junit testResults: 'build-11/test-results/test/*.xml', allowEmptyResults: true
-        } } }
-      }
+      steps { container('java-builder') {
+        sh './gradlew clean build test --info --stacktrace'
+        junit testResults: '**/build/test-results/test*/*.xml', allowEmptyResults: true
+      } }
     }
     stage('Publish Snapshot') {
       when { expression { deploySnapshot } }
       steps { container('java-builder') {
         configFileProvider([configFile(fileId: 'gradle.properties', targetLocation: '/home/jenkins/agent/gradle.properties')]) {
-          sh './gradlew clean build test publish --info'
+          sh './gradlew clean build test publish --info --stacktrace'
         }
-        junit testResults: 'build/test-results/test/*.xml', allowEmptyResults: true
+        junit testResults: '**/build/test-results/test*/*.xml', allowEmptyResults: true
       } }
     }
     stage('Publish Release') {
       when { expression { deployRelease } }
       steps { container('java-builder') {
         configFileProvider([configFile(fileId: 'gradle.properties', targetLocation: '/home/jenkins/agent/gradle.properties')]) {
-          sh './gradlew clean release --info'
+          sh './gradlew clean release --info --stacktrace'
         }
-        junit testResults: 'build/test-results/test/*.xml', allowEmptyResults: true
+        junit testResults: '**/build/test-results/test*/*.xml', allowEmptyResults: true
       } }
     }
     stage('Publish Code Quality') {
@@ -61,7 +51,7 @@ pipeline {
       steps { container('java-builder') {
         catchError(buildResult: 'SUCCESS', message: 'Unable to log code quality to Sonar.', stageResult: 'FAILURE') {
           withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_LOGIN')]) {
-            sh './gradlew sonarqube --info'
+            sh './gradlew sonarqube --info --stacktrace'
           }
         }
       } }
