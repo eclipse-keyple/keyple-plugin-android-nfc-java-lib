@@ -1,7 +1,7 @@
 #!groovy
 pipeline {
   environment {
-    PROJECT_NAME = "keyple-plugin-android-nfc-java-lib"
+    PROJECT_NAME = "keyple-java-plugin-android-nfc"
     PROJECT_BOT_NAME = "Eclipse Keyple Bot"
   }
   agent { kubernetes { yaml javaBuilder('2.0') } }
@@ -16,17 +16,16 @@ pipeline {
       script {
         env.KEYPLE_VERSION = sh(script: 'grep version gradle.properties | cut -d= -f2 | tr -d "[:space:]"', returnStdout: true).trim()
         env.GIT_COMMIT_MESSAGE = sh(script: 'git log --format=%B -1 | head -1 | tr -d "\n"', returnStdout: true)
-        env.SONAR_USER_HOME = '/home/jenkins'
         echo "Building version ${env.KEYPLE_VERSION} in branch ${env.GIT_BRANCH}"
         deployRelease = env.GIT_URL == "https://github.com/eclipse/${env.PROJECT_NAME}.git" && (env.GIT_BRANCH == "main" || env.GIT_BRANCH == "release-${env.KEYPLE_VERSION}") && env.CHANGE_ID == null && env.GIT_COMMIT_MESSAGE.startsWith("Release ${env.KEYPLE_VERSION}")
         deploySnapshot = !deployRelease && env.GIT_URL == "https://github.com/eclipse/${env.PROJECT_NAME}.git" && (env.GIT_BRANCH == "main" || env.GIT_BRANCH == "release-${env.KEYPLE_VERSION}") && env.CHANGE_ID == null
       }
     } } }
-    stage('Build and Test') {
+    stage('Build and Test:') {
       when { expression { !deploySnapshot && !deployRelease } }
       steps { container('java-builder') {
-        sh './gradlew clean build test --no-build-cache --info --stacktrace'
-        junit testResults: 'build/test-results/test/*.xml', allowEmptyResults: true
+        sh './gradlew clean build test --info --stacktrace'
+        junit testResults: '**/build/test-results/test*/*.xml', allowEmptyResults: true
       } }
     }
     stage('Publish Snapshot') {
@@ -35,7 +34,7 @@ pipeline {
         configFileProvider([configFile(fileId: 'gradle.properties', targetLocation: '/home/jenkins/agent/gradle.properties')]) {
           sh './gradlew clean build test publish --info --stacktrace'
         }
-        junit testResults: 'build/test-results/test/*.xml', allowEmptyResults: true
+        junit testResults: '**/build/test-results/test*/*.xml', allowEmptyResults: true
       } }
     }
     stage('Publish Release') {
@@ -44,7 +43,7 @@ pipeline {
         configFileProvider([configFile(fileId: 'gradle.properties', targetLocation: '/home/jenkins/agent/gradle.properties')]) {
           sh './gradlew clean release --info --stacktrace'
         }
-        junit testResults: 'build/test-results/test/*.xml', allowEmptyResults: true
+        junit testResults: '**/build/test-results/test*/*.xml', allowEmptyResults: true
       } }
     }
     stage('Publish Code Quality') {

@@ -8,9 +8,10 @@ plugins {
     jacoco
 }
 buildscript {
-    val kotlinVersion by extra("1.4.20")
+    val kotlinVersion: String by project
     repositories {
         mavenLocal()
+        maven(url = "https://repo.eclipse.org/service/local/repositories/maven_central/content")
         mavenCentral()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
         google()
@@ -24,7 +25,6 @@ buildscript {
         classpath("org.eclipse.keyple:keyple-gradle:0.2.+")
     }
 }
-apply(plugin = "org.eclipse.keyple")
 
 ///////////////////////////////////////////////////////////////////////////////
 //  APP CONFIGURATION
@@ -33,10 +33,11 @@ allprojects{
     group = "org.eclipse.keyple"
     apply (plugin = "org.jetbrains.dokka")
     apply (plugin = "com.diffplug.spotless")
-    project.version = "1.0.1"
+    apply(plugin = "org.eclipse.keyple")
 
     repositories {
         mavenLocal()
+        maven(url = "https://repo.eclipse.org/service/local/repositories/maven_central/content")
         mavenCentral()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
         google()
