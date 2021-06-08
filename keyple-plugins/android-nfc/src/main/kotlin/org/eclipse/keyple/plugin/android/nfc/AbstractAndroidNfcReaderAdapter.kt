@@ -182,7 +182,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      *
      * @since 2.0
      */
-    override fun getAtr(): ByteArray {
+    override fun getPowerOnDataBytes(): ByteArray {
         val atr = tagProxy?.atr
         Timber.d("ATR : ${ByteArrayUtil.toHex(atr)}")
         return atr ?: byteArrayOf()
