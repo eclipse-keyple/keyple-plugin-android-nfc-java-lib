@@ -1,1 +1,1 @@
-rootProject.name = "keyple-java-plugin-android-nfc"
+rootProject.name = "keyple-plugin-android-nfc-java-lib"
