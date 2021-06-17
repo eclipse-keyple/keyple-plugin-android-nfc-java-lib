@@ -1,5 +1,5 @@
 /* **************************************************************************************
- * Copyright (c) 2020 Calypso Networks Association https://www.calypsonet-asso.org/
+ * Copyright (c) 2020 Calypso Networks Association https://calypsonet.org/
  *
  * See the NOTICE file(s) distributed with this work for additional information
  * regarding copyright ownership.
@@ -26,22 +26,22 @@ import kotlinx.android.synthetic.main.activity_core_examples.drawerLayout
 import kotlinx.android.synthetic.main.activity_core_examples.eventRecyclerView
 import kotlinx.android.synthetic.main.activity_core_examples.navigationView
 import kotlinx.android.synthetic.main.activity_core_examples.toolbar
-import org.eclipse.keyple.core.service.ReaderEvent
-import org.eclipse.keyple.core.service.selection.CardSelectionService
-import org.eclipse.keyple.core.service.spi.ReaderObservationExceptionHandlerSpi
-import org.eclipse.keyple.core.service.spi.ReaderObserverSpi
+import org.calypsonet.terminal.reader.CardReaderEvent
+import org.calypsonet.terminal.reader.selection.CardSelectionManager
+import org.calypsonet.terminal.reader.spi.CardReaderObservationExceptionHandlerSpi
+import org.calypsonet.terminal.reader.spi.CardReaderObserverSpi
 import org.eclipse.keyple.plugin.android.nfc.example.R
 import org.eclipse.keyple.plugin.android.nfc.example.adapter.EventAdapter
 import org.eclipse.keyple.plugin.android.nfc.example.model.EventModel
 import timber.log.Timber
 
-abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, ReaderObserverSpi, ReaderObservationExceptionHandlerSpi {
+abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, CardReaderObserverSpi, CardReaderObservationExceptionHandlerSpi {
 
     /**
      * Use to modify event update behaviour regarding current use case execution
      */
     interface UseCase {
-        fun onEventUpdate(event: ReaderEvent?)
+        fun onEventUpdate(event: CardReaderEvent)
     }
 
     /**
@@ -52,7 +52,7 @@ abstract class AbstractExampleActivity : AppCompatActivity(), NavigationView.OnN
     protected val events = arrayListOf<EventModel>()
 
     protected var useCase: UseCase? = null
-    protected lateinit var cardSelectionsService: CardSelectionService
+    protected lateinit var cardSelectionManager: CardSelectionManager
 
     /**
      * Specif initialisation of implementing activities

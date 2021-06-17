@@ -1,5 +1,5 @@
 /* **************************************************************************************
- * Copyright (c) 2020 Calypso Networks Association https://www.calypsonet-asso.org/
+ * Copyright (c) 2020 Calypso Networks Association https://calypsonet.org/
  *
  * See the NOTICE file(s) distributed with this work for additional information
  * regarding copyright ownership.
@@ -22,17 +22,14 @@ import kotlinx.android.synthetic.main.activity_core_examples.toolbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.eclipse.keyple.card.generic.GenericExtensionServiceProvider
-import org.eclipse.keyple.core.service.CardSelectionServiceFactory
-import org.eclipse.keyple.core.service.KeypleCardCommunicationException
-import org.eclipse.keyple.core.service.KeypleReaderCommunicationException
+import org.calypsonet.terminal.reader.CardCommunicationException
+import org.calypsonet.terminal.reader.CardReaderEvent
+import org.calypsonet.terminal.reader.ObservableCardReader
+import org.calypsonet.terminal.reader.ReaderCommunicationException
+import org.eclipse.keyple.card.generic.GenericExtensionService
 import org.eclipse.keyple.core.service.ObservableReader
 import org.eclipse.keyple.core.service.Reader
-import org.eclipse.keyple.core.service.ReaderEvent
 import org.eclipse.keyple.core.service.SmartCardServiceProvider
-import org.eclipse.keyple.core.service.selection.CardSelectionService
-import org.eclipse.keyple.core.service.selection.CardSelector
-import org.eclipse.keyple.core.service.selection.spi.SmartCard
 import org.eclipse.keyple.core.util.ByteArrayUtil
 import org.eclipse.keyple.core.util.protocol.ContactlessCardCommonProtocol
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcPlugin
@@ -89,7 +86,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
 
                 Timber.d("Handle ACTION TECH intent")
                 // notify reader that card detection has been launched
-                (reader as ObservableReader).startCardDetection(ObservableReader.PollingMode.SINGLESHOT)
+                (reader as ObservableReader).startCardDetection(ObservableCardReader.DetectionMode.SINGLESHOT)
                 initFromBackgroundTextView()
                 (reader as AndroidNfcReader).processIntent(intent)
                 configureUseCase1ExplicitSelectionAid()
@@ -98,7 +95,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                     drawerLayout.openDrawer(GravityCompat.START)
                 }
                 // enable detection
-                (reader as ObservableReader).startCardDetection(ObservableReader.PollingMode.SINGLESHOT)
+                (reader as ObservableReader).startCardDetection(ObservableCardReader.DetectionMode.SINGLESHOT)
             }
         } catch (e: IOException) {
             showAlertDialog(e)
@@ -112,27 +109,11 @@ class CoreExamplesActivity : AbstractExampleActivity() {
         when (item.itemId) {
             R.id.usecase2 -> {
                 clearEvents()
-                (reader as ObservableReader).startCardDetection(ObservableReader.PollingMode.REPEATING)
+                (reader as ObservableReader).startCardDetection(ObservableCardReader.DetectionMode.REPEATING)
                 configureUseCase2DefaultSelectionNotification()
             }
         }
         return true
-    }
-
-    private fun doAndAnalyseSelection(reader: Reader?, cardSelectionsService: CardSelectionService, index: Int) {
-        try {
-            val cardSelectionsResult = cardSelectionsService.processCardSelectionScenario(reader)
-            if (cardSelectionsResult.hasActiveSelection()) {
-                val smartCard = cardSelectionsResult.activeSmartCard
-                addResultEvent(getSmardCardInfos(smartCard, index))
-            } else {
-                addResultEvent("The selection did not match for case $index.")
-            }
-        } catch (e: KeypleCardCommunicationException) {
-            addResultEvent("Error: ${e.message}")
-        } catch (e: KeypleReaderCommunicationException) {
-            addResultEvent("Error: ${e.message}")
-        }
     }
 
     private fun configureUseCase2DefaultSelectionNotification() {
@@ -145,7 +126,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
             /**
              * Prepare a card selection
              */
-            cardSelectionsService = CardSelectionServiceFactory.getService()
+            cardSelectionManager = SmartCardServiceProvider.getService().createCardSelectionManager()
 
             /**
              * Setting of an AID based selection
@@ -159,41 +140,39 @@ class CoreExamplesActivity : AbstractExampleActivity() {
              * Generic selection: configures a CardSelector with all the desired attributes to make the
              * selection
              */
-            val cardSelector = CardSelector
-                    .builder()
-                    .filterByDfName(aid)
-                    .filterByCardProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
-                    .build()
+            val cardSelection = GenericExtensionService.getInstance().createCardSelection()
+                .filterByCardProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
+                .filterByDfName(aid)
 
             /**
              * Add the selection case to the current selection (we could have added other cases here)
              */
-            cardSelectionsService.prepareSelection(GenericExtensionServiceProvider.getService().createCardSelection(cardSelector))
+            cardSelectionManager.prepareSelection(cardSelection)
 
-            cardSelectionsService.scheduleCardSelectionScenario(reader as ObservableReader, ObservableReader.NotificationMode.MATCHED_ONLY)
+            cardSelectionManager.scheduleCardSelectionScenario(reader as ObservableReader, ObservableCardReader.DetectionMode.SINGLESHOT, ObservableCardReader.NotificationMode.MATCHED_ONLY)
 
             useCase = object : UseCase {
-                override fun onEventUpdate(event: ReaderEvent?) {
+                override fun onEventUpdate(event: CardReaderEvent) {
                     CoroutineScope(Dispatchers.Main).launch {
-                        when (event?.eventType) {
-                            ReaderEvent.EventType.CARD_MATCHED -> {
+                        when (event?.type) {
+                            CardReaderEvent.Type.CARD_MATCHED -> {
                                 addResultEvent("CARD_MATCHED event: A card corresponding to request has been detected")
-                                val selectedCard = cardSelectionsService.parseScheduledCardSelectionsResponse(event.scheduledCardSelectionsResponse).activeSmartCard
+                                val selectedCard = cardSelectionManager.parseScheduledCardSelectionsResponse(event.scheduledCardSelectionsResponse).activeSmartCard
                                 if (selectedCard != null) {
                                     addResultEvent("Observer notification: the selection of the card has succeeded. End of the card processing.")
-                                    addResultEvent("Application FCI = ${ByteArrayUtil.toHex(selectedCard.fciBytes)}")
+                                    addResultEvent("Application FCI = ${ByteArrayUtil.toHex(selectedCard.selectApplicationResponse)}")
                                 } else {
                                     addResultEvent("The selection of the card has failed. Should not have occurred due to the MATCHED_ONLY selection mode.")
                                 }
                                 (reader as ObservableReader).finalizeCardProcessing()
                             }
 
-                            ReaderEvent.EventType.CARD_INSERTED -> {
+                            CardReaderEvent.Type.CARD_INSERTED -> {
                                 addResultEvent("CARD_INSERTED event: should not have occurred due to the MATCHED_ONLY selection mode.")
                                 (reader as ObservableReader).finalizeCardProcessing()
                             }
 
-                            ReaderEvent.EventType.CARD_REMOVED -> {
+                            CardReaderEvent.Type.CARD_REMOVED -> {
                                 addResultEvent("CARD_REMOVED event: There is no PO inserted anymore. Return to the waiting state...")
                             }
 
@@ -222,17 +201,12 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                 /**
                  * Get the generic card extension service
                  */
-                val cardExtension = GenericExtensionServiceProvider.getService()
+                val cardExtension = GenericExtensionService.getInstance()
 
                 /**
                  * Verify that the extension's API level is consistent with the current service.
                  */
                 smartCardService.checkCardExtension(cardExtension)
-
-                /**
-                 * Prepare the card selection
-                 */
-                cardSelectionsService = CardSelectionServiceFactory.getService()
 
                 /**
                  * Setting of an AID based selection (in this example a Calypso REV3 PO)
@@ -246,25 +220,23 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                  * Generic selection: configures a CardSelector with all the desired attributes to make
                  * the selection and read additional information afterwards
                  */
-                val cardSelector = CardSelector
-                        .builder()
-                        .filterByDfName(aid)
-                        .filterByCardProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
-                        .build()
+                val cardSelection = cardExtension.createCardSelection()
+                    .filterByCardProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
+                    .filterByDfName(aid)
 
                 /**
                  * Create a card selection using the generic card extension.
                  */
-                val cardSelection = cardExtension.createCardSelection(cardSelector)
+                cardSelectionManager.prepareSelection(cardSelection)
 
                 /**
                  * Prepare Selection
                  */
-                cardSelectionsService.prepareSelection(cardSelection)
+                cardSelectionManager.prepareSelection(cardSelection)
                 /**
                  * Provide the Reader with the selection operation to be processed when a card is inserted.
                  */
-                cardSelectionsService.scheduleCardSelectionScenario(reader as ObservableReader, ObservableReader.NotificationMode.MATCHED_ONLY, ObservableReader.PollingMode.SINGLESHOT)
+                cardSelectionManager.scheduleCardSelectionScenario(reader as ObservableReader, ObservableCardReader.DetectionMode.SINGLESHOT, ObservableCardReader.NotificationMode.MATCHED_ONLY)
 
                 /**
                  * We won't be listening for event update within this use case
@@ -273,20 +245,20 @@ class CoreExamplesActivity : AbstractExampleActivity() {
 
                 addActionEvent("Calypso PO selection: $aid")
                 try {
-                    val cardSelectionsResult = cardSelectionsService.processCardSelectionScenario(this)
+                    val cardSelectionsResult = cardSelectionManager.processCardSelectionScenario(this)
 
-                    if (cardSelectionsResult.hasActiveSelection()) {
+                    if (cardSelectionsResult.activeSmartCard != null) {
                         val matchedCard = cardSelectionsResult.activeSmartCard
                         addResultEvent("The selection of the card has succeeded.")
-                        addResultEvent("Application FCI = ${ByteArrayUtil.toHex(matchedCard.fciBytes)}")
+                        addResultEvent("Application FCI = ${ByteArrayUtil.toHex(matchedCard.selectApplicationResponse)}")
                         addResultEvent("End of the generic card processing.")
                     } else {
                         addResultEvent("The selection of the card has failed.")
                     }
                     (reader as ObservableReader).finalizeCardProcessing()
-                } catch (e: KeypleCardCommunicationException) {
+                } catch (e: CardCommunicationException) {
                     addResultEvent("Error: ${e.message}")
-                } catch (e: KeypleReaderCommunicationException) {
+                } catch (e: ReaderCommunicationException) {
                     addResultEvent("Error: ${e.message}")
                 }
             } else {
@@ -297,28 +269,8 @@ class CoreExamplesActivity : AbstractExampleActivity() {
         }
     }
 
-    private fun getSmardCardInfos(smartCard: SmartCard, index: Int): String {
-        val atr = try {
-            ByteArrayUtil.toHex(smartCard.atrBytes)
-        } catch (e: IllegalStateException) {
-            Timber.w(e)
-            e.message
-        }
-        val fci = try {
-            ByteArrayUtil.toHex(smartCard.fciBytes)
-        } catch (e: IllegalStateException) {
-            Timber.w(e)
-            e.message
-        }
-
-        return "Selection status for selection " +
-                "(indexed $index): \n\t\t" +
-                "ATR: ${atr}\n\t\t" +
-                "FCI: $fci"
-    }
-
-    override fun onReaderEvent(readerEvent: ReaderEvent) {
-        Timber.i("New ReaderEvent received : ${readerEvent.eventType}")
-        useCase?.onEventUpdate(readerEvent)
+    override fun onReaderEvent(cardReaderEvent: CardReaderEvent) {
+        Timber.i("New ReaderEvent received : ${cardReaderEvent.type}")
+        useCase?.onEventUpdate(cardReaderEvent)
     }
 }

@@ -117,9 +117,9 @@ dependencies {
 
 
     //keyple
-    api("org.eclipse.keyple:keyple-java-commons-api:2.0-SNAPSHOT")
-    api("org.eclipse.keyple:keyple-java-plugin-api:2.0-SNAPSHOT")
-    api("org.eclipse.keyple:keyple-java-utils:2.0.0-SNAPSHOT")
+    api("org.eclipse.keyple:keyple-common-java-api:2.0-SNAPSHOT")
+    api("org.eclipse.keyple:keyple-plugin-java-api:2.0-SNAPSHOT")
+    api("org.eclipse.keyple:keyple-util-java-lib:2.0.0-SNAPSHOT")
 
     //android
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
