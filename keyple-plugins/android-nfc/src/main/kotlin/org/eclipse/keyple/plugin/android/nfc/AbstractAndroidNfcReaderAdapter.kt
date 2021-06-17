@@ -1,5 +1,5 @@
 /* **************************************************************************************
- * Copyright (c) 2021 Calypso Networks Association https://www.calypsonet-asso.org/
+ * Copyright (c) 2021 Calypso Networks Association https://calypsonet.org/
  *
  * See the NOTICE file(s) distributed with this work for additional information
  * regarding copyright ownership.
@@ -182,10 +182,8 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      *
      * @since 2.0
      */
-    override fun getPowerOnDataBytes(): ByteArray {
-        val atr = tagProxy?.atr
-        Timber.d("ATR : ${ByteArrayUtil.toHex(atr)}")
-        return atr ?: byteArrayOf()
+    override fun getPowerOnData(): String {
+        return if (tagProxy?.atr != null) ByteArrayUtil.toHex(tagProxy?.atr) else ""
     }
 
     /**
