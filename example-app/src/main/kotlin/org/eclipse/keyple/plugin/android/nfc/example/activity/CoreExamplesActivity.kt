@@ -45,7 +45,7 @@ import timber.log.Timber
  */
 class CoreExamplesActivity : AbstractExampleActivity() {
 
-    protected lateinit var reader: Reader
+    private lateinit var reader: Reader
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -149,12 +149,12 @@ class CoreExamplesActivity : AbstractExampleActivity() {
              */
             cardSelectionManager.prepareSelection(cardSelection)
 
-            cardSelectionManager.scheduleCardSelectionScenario(reader as ObservableReader, ObservableCardReader.DetectionMode.SINGLESHOT, ObservableCardReader.NotificationMode.MATCHED_ONLY)
+            cardSelectionManager.scheduleCardSelectionScenario(reader as ObservableReader, ObservableCardReader.DetectionMode.REPEATING, ObservableCardReader.NotificationMode.MATCHED_ONLY)
 
             useCase = object : UseCase {
                 override fun onEventUpdate(event: CardReaderEvent) {
                     CoroutineScope(Dispatchers.Main).launch {
-                        when (event?.type) {
+                        when (event.type) {
                             CardReaderEvent.Type.CARD_MATCHED -> {
                                 addResultEvent("CARD_MATCHED event: A card corresponding to request has been detected")
                                 val selectedCard = cardSelectionManager.parseScheduledCardSelectionsResponse(event.scheduledCardSelectionsResponse).activeSmartCard
