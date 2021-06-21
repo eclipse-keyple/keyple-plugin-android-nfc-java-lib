@@ -238,7 +238,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      *
      * @since 2.0
      */
-    override fun unregister() {
+    override fun onUnregister() {
         clearContext()
     }
 

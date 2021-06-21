@@ -13,6 +13,16 @@ package org.eclipse.keyple.plugin.android.nfc
 
 import android.app.Activity
 
+/**
+ * Provides plugin's Factory. Regarding version of the device,
+ * the factory will return adapters with readers built upon android.nfc or simalliance OMAPI library.
+ *
+ * This factory must be provided to SmartCardServiceProvider.
+ *
+ * <pre>SmartCardServiceProvider.getService().registerPlugin(AndroidNfcPluginFactoryProvider(this).getFactory())</pre>
+ *
+ * @since 2.0
+ */
 class AndroidNfcPluginFactoryProvider(private val activity: Activity) : AndroidNfcPluginFactory {
 
     fun getFactory(): AndroidNfcPluginFactory {

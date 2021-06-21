@@ -33,7 +33,7 @@ import org.eclipse.keyple.core.service.SmartCardServiceProvider
 import org.eclipse.keyple.core.util.ByteArrayUtil
 import org.eclipse.keyple.core.util.protocol.ContactlessCardCommonProtocol
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcPlugin
-import org.eclipse.keyple.plugin.android.nfc.AndroidNfcPluginFactoryAdapter
+import org.eclipse.keyple.plugin.android.nfc.AndroidNfcPluginFactoryProvider
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcReader
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcSupportedProtocols
 import org.eclipse.keyple.plugin.android.nfc.example.R
@@ -41,7 +41,7 @@ import org.eclipse.keyple.plugin.android.nfc.example.util.CalypsoClassicInfo
 import timber.log.Timber
 
 /**
- * Examples of Keyple API usage relying on keyple-java-plugin-android-nfc
+ * Examples of Keyple API usage relying on keyple-plugin-android-nfc-java-lib
  */
 class CoreExamplesActivity : AbstractExampleActivity() {
 
@@ -53,7 +53,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
         /**
          * Register AndroidNfc plugin Factory
          */
-        val plugin = SmartCardServiceProvider.getService().registerPlugin(AndroidNfcPluginFactoryAdapter(this))
+        val plugin = SmartCardServiceProvider.getService().registerPlugin(AndroidNfcPluginFactoryProvider(this).getFactory())
 
         /**
          * Configure Nfc Reader

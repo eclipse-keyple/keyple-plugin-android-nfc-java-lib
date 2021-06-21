@@ -16,7 +16,7 @@ import android.os.Build
 import org.eclipse.keyple.core.plugin.spi.PluginSpi
 import org.eclipse.keyple.core.plugin.spi.reader.ReaderSpi
 
-class AndroidNfcPluginAdapter(private val activity: Activity) : AndroidNfcPlugin, PluginSpi {
+internal class AndroidNfcPluginAdapter(private val activity: Activity) : AndroidNfcPlugin, PluginSpi {
 
     /**
      * {@inheritDoc}
@@ -48,7 +48,7 @@ class AndroidNfcPluginAdapter(private val activity: Activity) : AndroidNfcPlugin
      *
      * @since 2.0
      */
-    override fun unregister() {
+    override fun onUnregister() {
         // Nothing to do for this plugin
     }
 }

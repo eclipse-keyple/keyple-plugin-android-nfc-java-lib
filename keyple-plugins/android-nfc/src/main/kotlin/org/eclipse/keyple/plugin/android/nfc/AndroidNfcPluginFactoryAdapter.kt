@@ -17,7 +17,7 @@ import org.eclipse.keyple.core.plugin.PluginApiProperties
 import org.eclipse.keyple.core.plugin.spi.PluginFactorySpi
 import org.eclipse.keyple.core.plugin.spi.PluginSpi
 
-class AndroidNfcPluginFactoryAdapter(private val activity: Activity) : AndroidNfcPluginFactory, PluginFactorySpi {
+internal class AndroidNfcPluginFactoryAdapter(private val activity: Activity) : AndroidNfcPluginFactory, PluginFactorySpi {
 
     /**
      * {@inheritDoc}

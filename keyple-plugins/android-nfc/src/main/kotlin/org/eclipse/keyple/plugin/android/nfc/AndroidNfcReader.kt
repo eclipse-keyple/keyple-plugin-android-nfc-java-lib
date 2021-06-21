@@ -14,6 +14,11 @@ package org.eclipse.keyple.plugin.android.nfc
 import android.content.Intent
 import org.eclipse.keyple.core.common.KeypleReaderExtension
 
+/**
+ * {@inheritDoc}
+ *
+ * @since 2.0
+ */
 interface AndroidNfcReader : KeypleReaderExtension {
 
     companion object {

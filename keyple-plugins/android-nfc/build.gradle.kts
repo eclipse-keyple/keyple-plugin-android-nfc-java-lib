@@ -8,7 +8,7 @@ plugins {
 }
 
 println("Working with version ${project.version}")
-val archivesBaseName = "keyple-java-plugin-android-nfc"
+val archivesBaseName = "keyple-plugin-android-nfc-java-lib"
 
 ///////////////////////////////////////////////////////////////////////////////
 //  APP CONFIGURATION
@@ -106,15 +106,6 @@ android {
 dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-
-    // //Keyple Common
-    // // implementation project(path: ':keyple-plugins:android-nfc')
-    // implementation "org.eclipse.keyple:keyple-java-service:2.0.0-SNAPSHOT"
-    // //For Calypso Extension examples
-    // implementation "org.eclipse.keyple:keyple-java-card-calypso:2.0.0-SNAPSHOT"
-    // //For Generic Extension examples
-    // implementation "org.eclipse.keyple:keyple-java-card-api:2.0-SNAPSHOT"
-
 
     //keyple
     api("org.eclipse.keyple:keyple-common-java-api:2.0-SNAPSHOT")
