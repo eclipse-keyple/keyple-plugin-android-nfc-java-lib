@@ -8,32 +8,46 @@ plugins {
     jacoco
 }
 buildscript {
+    val kotlinVersion: String by project
     repositories {
         mavenLocal()
         maven(url = "https://repo.eclipse.org/service/local/repositories/maven_central/content")
         mavenCentral()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
+        google()
+        jcenter()
     }
     dependencies {
+        classpath("com.android.tools.build:gradle:4.1.3")
+        classpath ("com.diffplug.spotless:spotless-plugin-gradle:3.27.1")
+        classpath ("org.jetbrains.dokka:dokka-gradle-plugin:0.10.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
         classpath("org.eclipse.keyple:keyple-gradle:0.2.+")
     }
 }
-apply(plugin = "org.eclipse.keyple")
 
 ///////////////////////////////////////////////////////////////////////////////
 //  APP CONFIGURATION
 ///////////////////////////////////////////////////////////////////////////////
-repositories {
-    mavenLocal()
-    maven(url = "https://repo.eclipse.org/service/local/repositories/maven_central/content")
-    mavenCentral()
-    maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
+allprojects{
+    group = "org.eclipse.keyple"
+    apply (plugin = "org.jetbrains.dokka")
+    apply (plugin = "com.diffplug.spotless")
+    apply(plugin = "org.eclipse.keyple")
+
+    repositories {
+        mavenLocal()
+        maven(url = "https://repo.eclipse.org/service/local/repositories/maven_central/content")
+        mavenCentral()
+        maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
+        maven(url = "https://s01.oss.sonatype.org/content/repositories/snapshots")
+        google()
+        jcenter()
+    }
 }
+
 dependencies {
-    implementation("org.eclipse.keyple:keyple-common-java-api:2.0-SNAPSHOT") { isChanging = true }
-    implementation("org.eclipse.keyple:keyple-plugin-java-api:2.0-SNAPSHOT") { isChanging = true }
-    implementation("org.eclipse.keyple:keyple-util-java-lib:2.0.0-SNAPSHOT") { isChanging = true }
-    implementation("org.slf4j:slf4j-api:1.7.25")
+    implementation("org.slf4j:slf4j-api:1.7.30")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.assertj:assertj-core:3.15.0")
 }
@@ -53,6 +67,11 @@ java {
 ///////////////////////////////////////////////////////////////////////////////
 tasks {
     spotless {
+        kotlin{
+            target("**/*.kt")
+            ktlint()
+            licenseHeaderFile("gradle/license_header.txt")
+        }
         java {
             target("src/**/*.java")
             licenseHeaderFile("gradle/license_header.txt")
