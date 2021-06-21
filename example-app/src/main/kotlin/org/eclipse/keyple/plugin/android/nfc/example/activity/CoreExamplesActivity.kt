@@ -175,9 +175,6 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                             CardReaderEvent.Type.CARD_REMOVED -> {
                                 addResultEvent("CARD_REMOVED event: There is no PO inserted anymore. Return to the waiting state...")
                             }
-
-                            else -> {
-                            }
                         }
                         eventRecyclerView.smoothScrollToPosition(events.size - 1)
                     }

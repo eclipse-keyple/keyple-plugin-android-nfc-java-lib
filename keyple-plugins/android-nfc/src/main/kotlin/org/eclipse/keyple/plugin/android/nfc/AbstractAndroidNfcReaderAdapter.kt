@@ -34,6 +34,8 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
         DontWaitForCardRemovalDuringProcessingSpi,
         NfcAdapter.ReaderCallback {
 
+    private val INVALID_OUT_DATA_BUFFER = "Error while transmitting APDU, invalid out data buffer"
+
     private var activityWeakRef = WeakReference(activity)
     private val activatedProtocols = ArrayList<AndroidNfcSupportedProtocols>()
     private var tagProxy: TagProxy? = null
@@ -196,23 +198,19 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
         Timber.d("Send data to card : ${apduIn.size} bytes")
         return with(tagProxy) {
             if (this == null) {
-                throw ReaderIOException(
-                        "Error while transmitting APDU, invalid out data buffer"
-                )
+                throw ReaderIOException(INVALID_OUT_DATA_BUFFER)
             } else {
                 try {
                     val bytes = transceive(apduIn)
                     if (bytes.size < 2) {
-                        throw ReaderIOException(
-                                "Error while transmitting APDU, invalid out data buffer"
-                        )
+                        throw ReaderIOException(INVALID_OUT_DATA_BUFFER)
                     } else {
                         Timber.d("Receive data from card : ${ByteArrayUtil.toHex(bytes)}")
                         bytes
                     }
                 } catch (e: IOException) {
                     throw CardIOException(
-                            "Error while transmitting APDU, invalid out data buffer", e
+                            INVALID_OUT_DATA_BUFFER, e
                     )
                 } catch (e: NoSuchElementException) {
                     throw CardIOException(
