@@ -15,7 +15,7 @@ import android.content.Intent
 import org.eclipse.keyple.core.common.KeypleReaderExtension
 
 /**
- * {@inheritDoc}
+ * Generic type for a Keyple Android NFC reader extension.
  *
  * @since 2.0
  */

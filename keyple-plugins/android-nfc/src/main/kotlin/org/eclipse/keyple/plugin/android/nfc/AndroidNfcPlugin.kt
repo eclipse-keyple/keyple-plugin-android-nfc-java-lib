@@ -14,7 +14,7 @@ package org.eclipse.keyple.plugin.android.nfc
 import org.eclipse.keyple.core.common.KeyplePluginExtension
 
 /**
- * {@inheritDoc}
+ * Generic type for a Keyple Android NFC plugin extension.
  *
  * @since 2.0
  */
