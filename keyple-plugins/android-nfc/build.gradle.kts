@@ -7,13 +7,11 @@ plugins {
     id("kotlin-android-extensions")
 }
 
-println("Working with version ${project.version}")
-val archivesBaseName = "keyple-plugin-android-nfc-java-lib"
-
 ///////////////////////////////////////////////////////////////////////////////
 //  APP CONFIGURATION
 ///////////////////////////////////////////////////////////////////////////////
 val kotlinVersion: String by project
+val archivesBaseName: String by project
 android {
     compileSdkVersion(29)
     buildToolsVersion("30.0.2")
@@ -102,6 +100,7 @@ android {
         getByName("androidTest").java.srcDirs("src/androidTest/kotlin")
     }
 }
+apply(plugin = "org.eclipse.keyple")
 
 dependencies {
 

@@ -2,7 +2,7 @@
 //  GRADLE CONFIGURATION
 ///////////////////////////////////////////////////////////////////////////////
 plugins {
-    `java`
+    java
     id("com.diffplug.spotless") version "5.10.2"
     id("org.sonarqube") version "3.1"
     jacoco
@@ -32,7 +32,6 @@ allprojects{
     group = "org.eclipse.keyple"
     apply (plugin = "org.jetbrains.dokka")
     apply (plugin = "com.diffplug.spotless")
-    apply(plugin = "org.eclipse.keyple")
 
     repositories {
         mavenLocal()
