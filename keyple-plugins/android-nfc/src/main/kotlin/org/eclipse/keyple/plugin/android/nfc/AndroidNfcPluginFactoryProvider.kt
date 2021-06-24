@@ -15,7 +15,7 @@ import android.app.Activity
 
 /**
  * Provides plugin's Factory. Regarding version of the device,
- * the factory will return adapters with readers built upon android.nfc or simalliance OMAPI library.
+ * the factory will return adapters with specific removal system.
  *
  * This factory must be provided to SmartCardServiceProvider.
  *
