@@ -12,7 +12,7 @@
 package org.eclipse.keyple.plugin.android.nfc
 
 import android.app.Activity
-import org.eclipse.keyple.core.common.CommonsApiProperties
+import org.eclipse.keyple.core.common.CommonApiProperties
 import org.eclipse.keyple.core.plugin.PluginApiProperties
 import org.eclipse.keyple.core.plugin.spi.PluginFactorySpi
 import org.eclipse.keyple.core.plugin.spi.PluginSpi
@@ -33,8 +33,8 @@ internal class AndroidNfcPluginFactoryAdapter(private val activity: Activity) : 
      *
      * @since 2.0
      */
-    override fun getCommonsApiVersion(): String {
-        return CommonsApiProperties.VERSION
+    override fun getCommonApiVersion(): String {
+        return CommonApiProperties.VERSION
     }
 
     /**
