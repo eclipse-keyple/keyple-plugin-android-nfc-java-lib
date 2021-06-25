@@ -129,3 +129,23 @@ dependencies {
     androidTestImplementation("com.android.support.test:runner:1.0.2")
     androidTestImplementation("com.android.support.test.espresso:espresso-core:3.0.2")
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//  TASKS CONFIGURATION
+///////////////////////////////////////////////////////////////////////////////
+tasks {
+    spotless {
+        kotlin{
+            target("**/*.kt")
+            ktlint()
+            licenseHeaderFile("${project.buildDir}/license_header.txt")
+        }
+        java {
+            target("src/**/*.java")
+            licenseHeaderFile("${project.buildDir}/license_header.txt")
+            importOrder("java", "javax", "org", "com", "")
+            removeUnusedImports()
+            googleJavaFormat()
+        }
+    }
+}

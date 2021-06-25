@@ -68,11 +68,9 @@ tasks {
         kotlin{
             target("**/*.kt")
             ktlint()
-            licenseHeaderFile("gradle/license_header.txt")
         }
         java {
             target("src/**/*.java")
-            licenseHeaderFile("gradle/license_header.txt")
             importOrder("java", "javax", "org", "com", "")
             removeUnusedImports()
             googleJavaFormat()
