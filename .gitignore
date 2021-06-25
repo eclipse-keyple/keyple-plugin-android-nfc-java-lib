@@ -10,6 +10,7 @@ release/
 .gradle/
 build*/
 license_header.txt
+LICENSE_HEADER
 
 # Eclipse
 .classpath
