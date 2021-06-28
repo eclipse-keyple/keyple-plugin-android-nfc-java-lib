@@ -43,12 +43,15 @@ android {
 
 dependencies {
 
-    //Keyple Common
+    /*
+    Keyple components
+    */
     implementation project(path: ':keyple-plugins:android-nfc')
-    implementation("org.calypsonet.terminal:calypsonet-terminal-reader-java-api:1.0-SNAPSHOT")
-    implementation "org.eclipse.keyple:keyple-service-java-lib:2.0.0-SNAPSHOT"
-    //For Generic Extension examples
-    implementation "org.eclipse.keyple:keyple-card-generic-java-lib:2.0.0-SNAPSHOT"
+    implementation("org.calypsonet.terminal:calypsonet-terminal-reader-java-api:1.0-rc2")
+    implementation("org.eclipse.keyple:keyple-common-java-api:2.0-rc2")
+    implementation("org.eclipse.keyple:keyple-service-java-lib:2.0.0-rc3")
+    implementation("org.eclipse.keyple:keyple-card-generic-java-lib:2.0.0-rc2")
+    implementation("org.eclipse.keyple:keyple-util-java-lib:2.0.0-rc1")
 
     /*
     Android components
