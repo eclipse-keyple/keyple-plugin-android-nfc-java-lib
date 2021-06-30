@@ -4,7 +4,10 @@
 plugins {
     id("com.android.library")
     id("kotlin-android")
-    id("kotlin-android-extensions")
+    kotlin("android.extensions")
+    id("org.jetbrains.dokka")
+    jacoco
+    id("com.diffplug.spotless")
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -16,11 +19,14 @@ android {
     compileSdkVersion(29)
     buildToolsVersion("30.0.2")
 
+    buildFeatures {
+        viewBinding = true
+    }
+
     defaultConfig {
         minSdkVersion(19)
         targetSdkVersion(29)
-        versionCode(1)
-        versionName("1.0")
+        versionName(project.version.toString())
 
         testInstrumentationRunner("android.support.test.runner.AndroidJUnitRunner")
         consumerProguardFiles("consumer-rules.pro")
@@ -29,6 +35,7 @@ android {
     buildTypes {
         getByName("release") {
             minifyEnabled(false)
+            isTestCoverageEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -60,35 +67,6 @@ android {
         }
     }
 
-     //create a task to generate javadoc for each variants
-     libraryVariants.forEach { variant ->
-         task("generate${variant.name.capitalize()}Javadoc", Javadoc::class) {
-             description = "Generates Javadoc for variant ${variant.name.capitalize()}"
-             //println "Create Javadoc Task for variant ${variant.name.capitalize()}"
-
-             source = variant.javaCompile.source
-             (options as StandardJavadocDocletOptions).links("http://docs.oracle.com/javase/6/docs/api/")
-             (options as StandardJavadocDocletOptions).links("http://d.android.com/reference/")
-
-             //println 'classpath : ' + classpath.getFiles()
-             //println 'options links : ' + options.links
-             //println 'source : ' + source.getFiles()
-
-             // First add all of your dependencies to the classpath, then add the android jars
-             doFirst {
-                 //doFirst is needed else we get the error "Cannot create variant 'android-lint' after configuration" with gradle 4.4+
-                 classpath = files(variant.javaCompile.classpath.files, project.android.bootClasspath)
-             }
-             classpath += files(android.bootClasspath)
-
-             // We're excluding these generated files
-             exclude("**/BuildConfig.java")
-             exclude("**/R.java")
-             isFailOnError = false
-             setDestinationDir(file("${project.buildDir}/docs/javadoc"))
-         }
-     }
-
     kotlinOptions {
         jvmTarget = javaTargetLevel
     }
@@ -100,7 +78,6 @@ android {
         getByName("androidTest").java.srcDirs("src/androidTest/kotlin")
     }
 }
-apply(plugin = "org.eclipse.keyple")
 
 dependencies {
 
@@ -120,12 +97,28 @@ dependencies {
     implementation("com.jakewharton.timber:timber:4.7.1") //Android
     implementation("com.arcao:slf4j-timber:3.1@aar") //SLF4J binding for Timber
 
+    dokkaJavadocPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.4.32")
+
     /** Test **/
     testImplementation("androidx.test:core-ktx:1.3.0")
-    testImplementation("junit:junit:4.12")
+    testImplementation("junit:junit:4.13.2")
     testImplementation("io.mockk:mockk:1.9")
     testImplementation("org.robolectric:robolectric:4.3.1")
 
     androidTestImplementation("com.android.support.test:runner:1.0.2")
     androidTestImplementation("com.android.support.test.espresso:espresso-core:3.0.2")
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//  TASKS CONFIGURATION
+///////////////////////////////////////////////////////////////////////////////
+tasks {
+    dokkaJavadoc.configure {
+        dokkaSourceSets {
+            named("main") {
+                noAndroidSdkLink.set(false)
+            }
+        }
+    }
+}
+apply(plugin = "org.eclipse.keyple")
