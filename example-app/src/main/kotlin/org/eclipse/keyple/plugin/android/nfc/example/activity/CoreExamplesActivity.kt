@@ -227,10 +227,6 @@ class CoreExamplesActivity : AbstractExampleActivity() {
                 cardSelectionManager.prepareSelection(cardSelection)
 
                 /**
-                 * Prepare Selection
-                 */
-                cardSelectionManager.prepareSelection(cardSelection)
-                /**
                  * Provide the Reader with the selection operation to be processed when a card is inserted.
                  */
                 cardSelectionManager.scheduleCardSelectionScenario(reader as ObservableReader, ObservableCardReader.DetectionMode.SINGLESHOT, ObservableCardReader.NotificationMode.MATCHED_ONLY)

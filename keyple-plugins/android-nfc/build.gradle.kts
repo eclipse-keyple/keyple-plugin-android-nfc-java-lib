@@ -97,8 +97,6 @@ dependencies {
     implementation("com.jakewharton.timber:timber:4.7.1") //Android
     implementation("com.arcao:slf4j-timber:3.1@aar") //SLF4J binding for Timber
 
-    dokkaJavadocPlugin("org.jetbrains.dokka:kotlin-as-java-plugin:1.4.32")
-
     /** Test **/
     testImplementation("androidx.test:core-ktx:1.3.0")
     testImplementation("junit:junit:4.13.2")
@@ -113,12 +111,20 @@ dependencies {
 //  TASKS CONFIGURATION
 ///////////////////////////////////////////////////////////////////////////////
 tasks {
-    dokkaJavadoc.configure {
+    dokkaHtml.configure {
         dokkaSourceSets {
             named("main") {
                 noAndroidSdkLink.set(false)
+                includeNonPublic.set(false)
+                includes.from(files("src/main/kdoc/overview.md"))
             }
         }
     }
+    val dokkaHtmlJar by registering(Jar::class) {
+        dependsOn(dokkaHtml)
+        archiveClassifier.set("kdoc")
+        from(dokkaHtml)
+    }
 }
 apply(plugin = "org.eclipse.keyple")
+
