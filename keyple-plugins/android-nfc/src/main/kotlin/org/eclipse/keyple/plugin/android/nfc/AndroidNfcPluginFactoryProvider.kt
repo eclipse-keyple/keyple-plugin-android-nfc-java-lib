@@ -14,17 +14,29 @@ package org.eclipse.keyple.plugin.android.nfc
 import android.app.Activity
 
 /**
- * Provides plugin's Factory. Regarding version of the device,
- * the factory will return adapters with specific removal system.
+ * The following example shows how to create a [AndroidNfcPluginFactoryFactory] object with the
+ * [AndroidNfcPluginFactoryProvider] and use it to register a Plugin.
  *
- * This factory must be provided to SmartCardServiceProvider.
+ * ```
+ * val plugin = SmartCardServiceProvider
+ *      .getService()
+ *      .registerPlugin(
+ *          AndroidNfcPluginFactoryProvider(this).getFactory()
+ *       )
+ * ```
  *
- * <pre>SmartCardServiceProvider.getService().registerPlugin(AndroidNfcPluginFactoryProvider(this).getFactory())</pre>
- *
+ * @property activity The the activity where the NFC is requested.
+ * @constructor Builds instances of [AndroidNfcPluginFactory] from context provided in constructor.
  * @since 2.0
  */
 class AndroidNfcPluginFactoryProvider(private val activity: Activity) : AndroidNfcPluginFactory {
 
+    /**
+     * Returns an instance of [AndroidNfcPluginFactory].
+     *
+     * @return A [AndroidNfcPluginFactory]
+     * @since 2.0
+     */
     fun getFactory(): AndroidNfcPluginFactory {
         return AndroidNfcPluginFactoryAdapter(activity)
     }
