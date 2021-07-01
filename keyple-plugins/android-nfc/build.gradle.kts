@@ -120,11 +120,6 @@ tasks {
             }
         }
     }
-    val dokkaHtmlJar by registering(Jar::class) {
-        dependsOn(dokkaHtml)
-        archiveClassifier.set("kdoc")
-        from(dokkaHtml)
-    }
 }
 apply(plugin = "org.eclipse.keyple")
 
