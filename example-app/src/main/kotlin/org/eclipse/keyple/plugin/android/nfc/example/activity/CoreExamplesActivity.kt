@@ -27,6 +27,7 @@ import org.calypsonet.terminal.reader.CardReaderEvent
 import org.calypsonet.terminal.reader.ObservableCardReader
 import org.calypsonet.terminal.reader.ReaderCommunicationException
 import org.eclipse.keyple.card.generic.GenericExtensionService
+import org.eclipse.keyple.core.service.ConfigurableReader
 import org.eclipse.keyple.core.service.ObservableReader
 import org.eclipse.keyple.core.service.Reader
 import org.eclipse.keyple.core.service.SmartCardServiceProvider
@@ -63,7 +64,7 @@ class CoreExamplesActivity : AbstractExampleActivity() {
             addObserver(this@CoreExamplesActivity)
 
             // with this protocol settings we activate the nfc for ISO1443_4 protocol
-            activateProtocol(ContactlessCardCommonProtocol.ISO_14443_4.name, ContactlessCardCommonProtocol.ISO_14443_4.name)
+            (this as ConfigurableReader).activateProtocol(ContactlessCardCommonProtocol.ISO_14443_4.name, ContactlessCardCommonProtocol.ISO_14443_4.name)
             reader = this
         }
     }

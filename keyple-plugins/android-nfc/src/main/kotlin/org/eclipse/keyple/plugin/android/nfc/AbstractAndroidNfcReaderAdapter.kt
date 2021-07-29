@@ -22,6 +22,7 @@ import org.eclipse.keyple.core.plugin.CardIOException
 import org.eclipse.keyple.core.plugin.ReaderIOException
 import org.eclipse.keyple.core.plugin.WaitForCardInsertionAutonomousReaderApi
 import org.eclipse.keyple.core.plugin.WaitForCardRemovalAutonomousReaderApi
+import org.eclipse.keyple.core.plugin.spi.reader.ConfigurableReaderSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.ObservableReaderSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.state.insertion.WaitForCardInsertionAutonomousSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.state.processing.DontWaitForCardRemovalDuringProcessingSpi
@@ -29,6 +30,7 @@ import org.eclipse.keyple.core.util.ByteArrayUtil
 import timber.log.Timber
 
 internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : AndroidNfcReader,
+        ConfigurableReaderSpi,
         ObservableReaderSpi,
         WaitForCardInsertionAutonomousSpi,
         DontWaitForCardRemovalDuringProcessingSpi,
