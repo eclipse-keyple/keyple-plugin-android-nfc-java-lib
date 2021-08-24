@@ -1,5 +1,5 @@
 /* **************************************************************************************
- * Copyright (c) 2020 Calypso Networks Association https://calypsonet.org/
+ * Copyright (c) 2021 Calypso Networks Association https://calypsonet.org/
  *
  * See the NOTICE file(s) distributed with this work for additional information
  * regarding copyright ownership.
@@ -9,10 +9,15 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  ************************************************************************************** */
-package org.eclipse.keyple.plugin.android.nfc.example.util
+package org.eclipse.keyple.plugin.android.nfc
 
-object CalypsoClassicInfo {
-    /** AID: Keyple test kit profile 1, Application 2  */
-    val AID_CD_LIGHT_GTML = "315449432E49434131"
-    val AID_HOPLINK = "A000000291A00000019102"
+/**
+ * Enum mapping Protocols to android NFC Tech identifiers.
+ *
+ * @since 2.0
+*/
+public enum class AndroidNfcSupportedProtocols(val androidNfcTechIdentifier: String) {
+    ISO_14443_4("android.nfc.tech.IsoDep"),
+    MIFARE_ULTRA_LIGHT("android.nfc.tech.MifareUltralight"),
+    MIFARE_CLASSIC("android.nfc.tech.MifareClassic")
 }

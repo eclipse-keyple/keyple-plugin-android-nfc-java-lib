@@ -1,14 +1,22 @@
-# Keyple Java Plugin Android NFC
+# Keyple Plugin Android NFC Java Library
 
 ## Overview
 
-The **Keyple Java Plugin Android NFC** contains interfaces and classes to manage Android NFC readers within a Keyple application.
+The **Keyple Plugin Android NFC** Java library contains interfaces and classes to manage Android NFC readers within a Keyple application.
 
 This library **should be imported explicitly** by the main application.
 
 ## User Guide & Download Information
 
 The full documentation, including download information is available in the **Documentation** section of the official Keyple website [keyple.org](https://keyple.org)
+
+## Javadoc
+
+The javadoc is available online: [eclipse.github.io/keyple-plugin-android-nfc-java-lib/](https://eclipse.github.io/keyple-plugin-android-nfc-java-lib/)
+
+## Examples
+
+Examples of implementation are available in the following repository: [github.com/eclipse/keyple-java-example](https://github.com/eclipse/keyple-java-example)
 
 ## Build the Code
 

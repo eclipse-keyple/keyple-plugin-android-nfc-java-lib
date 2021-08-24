@@ -1,3 +1,2 @@
-include(":example-app")
-include(":keyple-plugins:android-nfc")
+include(":plugin")
 rootProject.name = "keyple-plugin-android-nfc-java-lib"
