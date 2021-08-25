@@ -117,7 +117,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun getName(): String {
         return AndroidNfcReader.READER_NAME
@@ -126,7 +126,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     @Throws(ReaderIOException::class)
     override fun openPhysicalChannel() {
@@ -147,7 +147,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     @Throws(ReaderIOException::class)
     override fun closePhysicalChannel() {
@@ -165,7 +165,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun isPhysicalChannelOpen(): Boolean {
         return tagProxy?.isConnected == true
@@ -174,7 +174,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     @Throws(ReaderIOException::class)
     override fun checkCardPresence(): Boolean {
@@ -184,7 +184,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun getPowerOnData(): String {
         return if (tagProxy?.atr != null) ByteArrayUtil.toHex(tagProxy?.atr) else ""
@@ -193,7 +193,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     @Throws(IllegalArgumentException::class, CardIOException::class)
     override fun transmitApdu(apduIn: ByteArray): ByteArray {
@@ -227,7 +227,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun isContactless(): Boolean {
         return true
@@ -236,7 +236,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun onUnregister() {
         clearContext()
@@ -245,7 +245,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun onStartDetection() {
         Timber.d("onStartDetection")
@@ -271,7 +271,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun onStopDetection() {
         Timber.d("onStopDetection")
@@ -287,7 +287,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun isProtocolSupported(readerProtocol: String): Boolean {
         return try {
@@ -303,7 +303,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      *
      * List of available readerProtocol is ISO_14443_4, MIFARE_ULTRA_LIGHT, MIFARE_CLASSIC.
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun activateProtocol(readerProtocol: String) {
         if (activatedProtocols.firstOrNull { it.name == readerProtocol } == null) {
@@ -314,7 +314,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun deactivateProtocol(readerProtocol: String) {
         AndroidNfcSupportedProtocols
@@ -324,7 +324,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun isCurrentProtocol(readerProtocol: String): Boolean {
         val protocol = activatedProtocols.firstOrNull { it.name == readerProtocol } ?: return false
@@ -334,7 +334,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun connect(waitForCardInsertionAutonomousReaderApi: WaitForCardInsertionAutonomousReaderApi) {
         this.waitForCardInsertionAutonomousReaderApi = waitForCardInsertionAutonomousReaderApi
@@ -350,7 +350,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      * When a card is presented within the NFC field, the event
      * is transmitted from Android OS component to keyple
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun onTagDiscovered(tag: Tag?) {
         Timber.i("Received Tag Discovered event $tag")
@@ -370,7 +370,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      *
      * @param intent : Intent received and filterByProtocol by xml tech_list
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun processIntent(intent: Intent) {
         // Extract Tag from Intent
@@ -403,7 +403,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
     /**
      * Allow to retrieve tag reguardless of Android version
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     protected fun getTagProxyTag(): Tag? {
         return tagProxy?.tag

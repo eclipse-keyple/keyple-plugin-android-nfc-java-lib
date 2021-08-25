@@ -22,7 +22,7 @@ internal class AndroidNfcPluginFactoryAdapter(private val activity: Activity) : 
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun getPluginApiVersion(): String {
         return PluginApiProperties.VERSION
@@ -31,7 +31,7 @@ internal class AndroidNfcPluginFactoryAdapter(private val activity: Activity) : 
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun getCommonApiVersion(): String {
         return CommonApiProperties.VERSION
@@ -40,7 +40,7 @@ internal class AndroidNfcPluginFactoryAdapter(private val activity: Activity) : 
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun getPluginName(): String {
         return AndroidNfcPlugin.PLUGIN_NAME
@@ -49,7 +49,7 @@ internal class AndroidNfcPluginFactoryAdapter(private val activity: Activity) : 
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun getPlugin(): PluginSpi {
         return AndroidNfcPluginAdapter(activity)

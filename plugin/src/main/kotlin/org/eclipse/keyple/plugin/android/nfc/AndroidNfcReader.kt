@@ -17,7 +17,7 @@ import org.eclipse.keyple.core.common.KeypleReaderExtension
 /**
  * Generic type for a Keyple Android NFC reader extension.
  *
- * @since 2.0
+ * @since 2.0.0
  */
 interface AndroidNfcReader : KeypleReaderExtension {
 
@@ -31,7 +31,7 @@ interface AndroidNfcReader : KeypleReaderExtension {
      * Used for logging purpose
      * @return string
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     fun printTagId(): String
 
@@ -41,7 +41,7 @@ interface AndroidNfcReader : KeypleReaderExtension {
      *
      * @param intent : Intent received and filterByProtocol by xml tech_list
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     fun processIntent(intent: Intent)
 
@@ -49,21 +49,21 @@ interface AndroidNfcReader : KeypleReaderExtension {
      * Allows the calling application to specify the delay that the platform will use for performing presence checks on any discovered tag.
      * see @NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     var presenceCheckDelay: Int?
 
     /**
      * Allows the invoker to prevent the platform from playing sounds when it discovers a tag.
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     var noPlateformSound: Boolean?
 
     /**
      * Prevent the platform from performing any NDEF checks in reader mode.
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     var skipNdefCheck: Boolean?
 }

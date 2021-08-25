@@ -23,7 +23,7 @@ import timber.log.Timber
  *
  * It will used native features of Android NFC API to detect card removal.
  *
- * @since 1.0
+ * @since 1.0.0
  */
 internal class AndroidNfcReaderPostNAdapter(activity: Activity) : AbstractAndroidNfcReaderAdapter(activity), WaitForCardRemovalBlockingSpi {
 
@@ -42,7 +42,7 @@ internal class AndroidNfcReaderPostNAdapter(activity: Activity) : AbstractAndroi
      *
      * @see WaitForCardRemovalBlockingSpi.stopWaitForCardRemoval
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     @TargetApi(Build.VERSION_CODES.N)
     override fun waitForCardRemoval() {
@@ -84,7 +84,7 @@ internal class AndroidNfcReaderPostNAdapter(activity: Activity) : AbstractAndroi
      *
      * @see WaitForCardRemovalBlockingSpi.waitForCardRemoval
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun stopWaitForCardRemoval() {
         Timber.d("stopWaitForCardRemoval")

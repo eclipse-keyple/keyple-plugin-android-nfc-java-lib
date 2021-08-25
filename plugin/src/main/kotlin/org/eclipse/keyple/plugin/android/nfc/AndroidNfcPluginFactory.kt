@@ -17,6 +17,6 @@ import org.eclipse.keyple.core.common.KeyplePluginExtensionFactory
  * Interface for the Nfc Plugin Factory. Use  [AndroidNfcPluginFactoryProvider] to retrieve
  * an instance of it.
  *
- * @since 2.0
+ * @since 2.0.0
  */
 interface AndroidNfcPluginFactory : KeyplePluginExtensionFactory

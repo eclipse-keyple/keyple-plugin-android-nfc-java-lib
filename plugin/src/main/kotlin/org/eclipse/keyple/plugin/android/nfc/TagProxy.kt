@@ -36,7 +36,7 @@ internal class TagProxy private constructor(private val tagTechnology: TagTechno
      *
      * @return a non null ByteArray
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     val atr: ByteArray
         @Throws(IOException::class, NoSuchElementException::class)
@@ -54,7 +54,7 @@ internal class TagProxy private constructor(private val tagTechnology: TagTechno
     /**
      * Transceive APDUs to correct using correct Android nfc tech identifier
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     @Throws(IOException::class, NoSuchElementException::class)
     fun transceive(data: ByteArray): ByteArray {

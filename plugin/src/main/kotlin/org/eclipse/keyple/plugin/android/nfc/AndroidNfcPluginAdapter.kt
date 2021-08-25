@@ -21,7 +21,7 @@ internal class AndroidNfcPluginAdapter(private val activity: Activity) : Android
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun getName(): String {
         return AndroidNfcPlugin.PLUGIN_NAME
@@ -30,7 +30,7 @@ internal class AndroidNfcPluginAdapter(private val activity: Activity) : Android
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun searchAvailableReaders(): MutableSet<ReaderSpi> {
         val readerSpis = HashSet<ReaderSpi>()
@@ -46,7 +46,7 @@ internal class AndroidNfcPluginAdapter(private val activity: Activity) : Android
     /**
      * {@inheritDoc}
      *
-     * @since 2.0
+     * @since 2.0.0
      */
     override fun onUnregister() {
         // Nothing to do for this plugin

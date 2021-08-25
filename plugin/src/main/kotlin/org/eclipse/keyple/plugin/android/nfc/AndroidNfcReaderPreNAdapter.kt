@@ -19,6 +19,6 @@ import org.eclipse.keyple.core.plugin.spi.reader.observable.state.removal.WaitFo
  *
  * It uses a Ping monitoring job to detect card removal
  *
- * @since 2.0
+ * @since 2.0.0
  */
 internal class AndroidNfcReaderPreNAdapter(activity: Activity) : AbstractAndroidNfcReaderAdapter(activity), WaitForCardRemovalNonBlockingSpi

@@ -16,7 +16,7 @@ import org.eclipse.keyple.core.common.KeyplePluginExtension
 /**
  * Generic type for a Keyple Android NFC plugin extension.
  *
- * @since 2.0
+ * @since 2.0.0
  */
 interface AndroidNfcPlugin : KeyplePluginExtension {
     companion object {
