@@ -121,4 +121,4 @@ tasks {
         }
     }
 }
-
+apply(plugin = "org.eclipse.keyple") // To do last
