@@ -7,10 +7,8 @@ licenses:
     url: https://www.eclipse.org/legal/epl-2.0/
     distribution: repo
 developers:
-  - name: Keyple Support
+  - name: Keyple Contributors
     email: keyple-dev@eclipse.org
-  - name: Meddy Menzikoff
-    email: m.menzikoff@oneclickflare.fr
 scm:
   connection: scm:git:git://github.com/eclipse/keyple-plugin-android-nfc-java-lib.git
   developerConnection: scm:git:https://github.com/eclipse/keyple-plugin-android-nfc-java-lib.git
