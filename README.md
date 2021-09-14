@@ -2,7 +2,7 @@
 
 ## Overview
 
-The **Keyple Plugin Android NFC Java Library** is an addon to allow an application using Keyple to interact with Android NFC readers.
+The **Keyple Plugin Android NFC Java Library** is an add-on to allow an application using Keyple to interact with Android NFC readers.
 
 ## Documentation & Contribution Guide
 
