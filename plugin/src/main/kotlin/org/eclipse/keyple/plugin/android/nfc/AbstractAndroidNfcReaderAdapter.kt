@@ -26,7 +26,7 @@ import org.eclipse.keyple.core.plugin.spi.reader.ConfigurableReaderSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.ObservableReaderSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.state.insertion.WaitForCardInsertionAutonomousSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.state.processing.DontWaitForCardRemovalDuringProcessingSpi
-import org.eclipse.keyple.core.util.ByteArrayUtil
+import org.eclipse.keyple.core.util.HexUtil
 import timber.log.Timber
 
 internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : AndroidNfcReader,
@@ -187,7 +187,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
      * @since 2.0.0
      */
     override fun getPowerOnData(): String {
-        return if (tagProxy?.atr != null) ByteArrayUtil.toHex(tagProxy?.atr) else ""
+        return if (tagProxy?.atr != null) HexUtil.toHex(tagProxy?.atr) else ""
     }
 
     /**
@@ -207,7 +207,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
                     if (bytes.size < 2) {
                         throw ReaderIOException(INVALID_OUT_DATA_BUFFER)
                     } else {
-                        Timber.d("Receive data from card : ${ByteArrayUtil.toHex(bytes)}")
+                        Timber.d("Receive data from card : ${HexUtil.toHex(bytes)}")
                         bytes
                     }
                 } catch (e: IOException) {

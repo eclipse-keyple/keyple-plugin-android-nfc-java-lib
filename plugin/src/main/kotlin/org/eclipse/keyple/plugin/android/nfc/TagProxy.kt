@@ -17,7 +17,7 @@ import android.nfc.tech.MifareClassic
 import android.nfc.tech.MifareUltralight
 import android.nfc.tech.TagTechnology
 import java.io.IOException
-import org.eclipse.keyple.core.util.ByteArrayUtil
+import org.eclipse.keyple.core.util.HexUtil
 import timber.log.Timber
 
 /**
@@ -41,8 +41,8 @@ internal class TagProxy private constructor(private val tagTechnology: TagTechno
     val atr: ByteArray
         @Throws(IOException::class, NoSuchElementException::class)
         get() = when (tech) {
-            AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier -> ByteArrayUtil.fromHex("3B8F8001804F0CA000000306030001000000006A")
-            AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier -> ByteArrayUtil.fromHex("3B8F8001804F0CA0000003060300030000000068")
+            AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier -> HexUtil.toByteArray("3B8F8001804F0CA000000306030001000000006A")
+            AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier -> HexUtil.toByteArray("3B8F8001804F0CA0000003060300030000000068")
             AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier ->
                 if ((tagTechnology as IsoDep).hiLayerResponse != null)
                     tagTechnology.hiLayerResponse
