@@ -156,7 +156,10 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) : An
             Timber.i("Disconnected tag : ${printTagId()}")
         } catch (e: IOException) {
             Timber.e(e, "Disconnecting error")
-            throw ReaderIOException("Error while closing physical channel", e)
+            throw ReaderIOException("IO Error while closing physical channel", e)
+        } catch (e: SecurityException) {
+            Timber.e(e, "Disconnecting error")
+            throw ReaderIOException("Security error while closing physical channel", e)
         } finally {
             tagProxy = null
         }

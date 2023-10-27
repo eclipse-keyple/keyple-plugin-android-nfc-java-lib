@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added project status badges on `README.md` file.
 ### Fixed
 - CI: code coverage report when releasing.
+- Handled `SecurityException` raised when closing the physical channel, to resolve a malfunction of Keyple Service's 
+  internal state machine on recent versions of Android (API 12+).
 
 ## [2.0.1] - 2022-06-09
 ### Added
