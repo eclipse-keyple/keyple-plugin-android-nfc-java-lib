@@ -12,7 +12,7 @@
 package org.eclipse.keyple.plugin.android.nfc
 
 import android.app.Activity
-import org.eclipse.keyple.core.plugin.spi.reader.observable.state.removal.WaitForCardRemovalNonBlockingSpi
+import org.eclipse.keyple.core.plugin.spi.reader.observable.state.removal.CardRemovalWaiterNonBlockingSpi
 
 /**
  * Singleton used by the plugin to run native NFC reader on Android version < 24 (Android N).
@@ -21,4 +21,15 @@ import org.eclipse.keyple.core.plugin.spi.reader.observable.state.removal.WaitFo
  *
  * @since 2.0.0
  */
-internal class AndroidNfcReaderPreNAdapter(activity: Activity) : AbstractAndroidNfcReaderAdapter(activity), WaitForCardRemovalNonBlockingSpi
+internal class AndroidNfcReaderPreNAdapter(activity: Activity) :
+    AbstractAndroidNfcReaderAdapter(activity), CardRemovalWaiterNonBlockingSpi {
+
+  /**
+   * {@inheritDoc}
+   *
+   * @since 2.1.0
+   */
+  override fun getCardRemovalMonitoringSleepDuration(): Int {
+    return 10
+  }
+}

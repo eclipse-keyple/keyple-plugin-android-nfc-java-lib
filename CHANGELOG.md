@@ -5,12 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.1.0] - 2023-11-13
+:warning: **CAUTION**: this version requires to use at least version `2.3.2` of the
+[Keyple Service Library](https://keyple.org/components-java/core/keyple-service-java-lib/)!
 ### Added
 - Added project status badges on `README.md` file.
 ### Fixed
 - CI: code coverage report when releasing.
 - Handled `SecurityException` raised when closing the physical channel, to resolve a malfunction of Keyple Service's 
   internal state machine on recent versions of Android (API 12+).
+### Upgraded
+- Keyple Plugin API `2.0.0` -> `2.2.0`
 
 ## [2.0.1] - 2022-06-09
 ### Added
@@ -26,7 +32,8 @@ This is the initial release.
 It follows the extraction of Keyple 1.0 components contained in the `eclipse/keyple-java` repository to dedicated repositories.
 It also brings many major API changes.
 
-[unreleased]: https://github.com/eclipse/keyple-plugin-android-nfc-java-lib/compare/2.0.1...HEAD
+[unreleased]: https://github.com/eclipse/keyple-plugin-android-nfc-java-lib/compare/2.1.0...HEAD
+[2.1.0]: https://github.com/eclipse/keyple-plugin-android-nfc-java-lib/compare/2.0.1...2.1.0
 [2.0.1]: https://github.com/eclipse/keyple-plugin-android-nfc-java-lib/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/eclipse/keyple-plugin-android-nfc-java-lib/releases/tag/2.0.0
 

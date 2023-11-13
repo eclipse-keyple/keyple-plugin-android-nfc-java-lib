@@ -16,39 +16,40 @@ import android.os.Build
 import org.eclipse.keyple.core.plugin.spi.PluginSpi
 import org.eclipse.keyple.core.plugin.spi.reader.ReaderSpi
 
-internal class AndroidNfcPluginAdapter(private val activity: Activity) : AndroidNfcPlugin, PluginSpi {
+internal class AndroidNfcPluginAdapter(private val activity: Activity) :
+    AndroidNfcPlugin, PluginSpi {
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 2.0.0
-     */
-    override fun getName(): String {
-        return AndroidNfcPlugin.PLUGIN_NAME
-    }
+  /**
+   * {@inheritDoc}
+   *
+   * @since 2.0.0
+   */
+  override fun getName(): String {
+    return AndroidNfcPlugin.PLUGIN_NAME
+  }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 2.0.0
-     */
-    override fun searchAvailableReaders(): MutableSet<ReaderSpi> {
-        val readerSpis = HashSet<ReaderSpi>()
-        readerSpis.add(
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                AndroidNfcReaderPreNAdapter(activity)
-            } else {
-                AndroidNfcReaderPostNAdapter(activity)
-            })
-        return readerSpis
-    }
+  /**
+   * {@inheritDoc}
+   *
+   * @since 2.0.0
+   */
+  override fun searchAvailableReaders(): MutableSet<ReaderSpi> {
+    val readerSpis = HashSet<ReaderSpi>()
+    readerSpis.add(
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+          AndroidNfcReaderPreNAdapter(activity)
+        } else {
+          AndroidNfcReaderPostNAdapter(activity)
+        })
+    return readerSpis
+  }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 2.0.0
-     */
-    override fun onUnregister() {
-        // Nothing to do for this plugin
-    }
+  /**
+   * {@inheritDoc}
+   *
+   * @since 2.0.0
+   */
+  override fun onUnregister() {
+    // Nothing to do for this plugin
+  }
 }

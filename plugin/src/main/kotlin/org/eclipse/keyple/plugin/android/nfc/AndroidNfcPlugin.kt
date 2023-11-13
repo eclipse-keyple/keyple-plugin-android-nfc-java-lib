@@ -19,7 +19,7 @@ import org.eclipse.keyple.core.common.KeyplePluginExtension
  * @since 2.0.0
  */
 interface AndroidNfcPlugin : KeyplePluginExtension {
-    companion object {
-        const val PLUGIN_NAME = "AndroidNfcPlugin"
-    }
+  companion object {
+    const val PLUGIN_NAME = "AndroidNfcPlugin"
+  }
 }

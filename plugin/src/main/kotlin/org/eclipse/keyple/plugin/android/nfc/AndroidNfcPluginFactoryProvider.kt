@@ -14,7 +14,7 @@ package org.eclipse.keyple.plugin.android.nfc
 import android.app.Activity
 
 /**
- * The following example shows how to create a [AndroidNfcPluginFactoryFactory] object with the
+ * The following example shows how to create a [AndroidNfcPluginFactory] object with the
  * [AndroidNfcPluginFactoryProvider] and use it to register a Plugin.
  *
  * ```
@@ -31,13 +31,13 @@ import android.app.Activity
  */
 class AndroidNfcPluginFactoryProvider(private val activity: Activity) : AndroidNfcPluginFactory {
 
-    /**
-     * Returns an instance of [AndroidNfcPluginFactory].
-     *
-     * @return A [AndroidNfcPluginFactory]
-     * @since 2.0.0
-     */
-    fun getFactory(): AndroidNfcPluginFactory {
-        return AndroidNfcPluginFactoryAdapter(activity)
-    }
+  /**
+   * Returns an instance of [AndroidNfcPluginFactory].
+   *
+   * @return A [AndroidNfcPluginFactory]
+   * @since 2.0.0
+   */
+  fun getFactory(): AndroidNfcPluginFactory {
+    return AndroidNfcPluginFactoryAdapter(activity)
+  }
 }

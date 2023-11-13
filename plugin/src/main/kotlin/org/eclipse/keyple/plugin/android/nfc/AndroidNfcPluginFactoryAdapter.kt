@@ -17,41 +17,42 @@ import org.eclipse.keyple.core.plugin.PluginApiProperties
 import org.eclipse.keyple.core.plugin.spi.PluginFactorySpi
 import org.eclipse.keyple.core.plugin.spi.PluginSpi
 
-internal class AndroidNfcPluginFactoryAdapter(private val activity: Activity) : AndroidNfcPluginFactory, PluginFactorySpi {
+internal class AndroidNfcPluginFactoryAdapter(private val activity: Activity) :
+    AndroidNfcPluginFactory, PluginFactorySpi {
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 2.0.0
-     */
-    override fun getPluginApiVersion(): String {
-        return PluginApiProperties.VERSION
-    }
+  /**
+   * {@inheritDoc}
+   *
+   * @since 2.0.0
+   */
+  override fun getPluginApiVersion(): String {
+    return PluginApiProperties.VERSION
+  }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 2.0.0
-     */
-    override fun getCommonApiVersion(): String {
-        return CommonApiProperties.VERSION
-    }
+  /**
+   * {@inheritDoc}
+   *
+   * @since 2.0.0
+   */
+  override fun getCommonApiVersion(): String {
+    return CommonApiProperties.VERSION
+  }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 2.0.0
-     */
-    override fun getPluginName(): String {
-        return AndroidNfcPlugin.PLUGIN_NAME
-    }
+  /**
+   * {@inheritDoc}
+   *
+   * @since 2.0.0
+   */
+  override fun getPluginName(): String {
+    return AndroidNfcPlugin.PLUGIN_NAME
+  }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 2.0.0
-     */
-    override fun getPlugin(): PluginSpi {
-        return AndroidNfcPluginAdapter(activity)
-    }
+  /**
+   * {@inheritDoc}
+   *
+   * @since 2.0.0
+   */
+  override fun getPlugin(): PluginSpi {
+    return AndroidNfcPluginAdapter(activity)
+  }
 }

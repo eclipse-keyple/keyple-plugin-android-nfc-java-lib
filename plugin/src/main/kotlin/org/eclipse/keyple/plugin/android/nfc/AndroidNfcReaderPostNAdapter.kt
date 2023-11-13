@@ -15,7 +15,7 @@ import android.annotation.TargetApi
 import android.app.Activity
 import android.nfc.NfcAdapter
 import android.os.Build
-import org.eclipse.keyple.core.plugin.spi.reader.observable.state.removal.WaitForCardRemovalBlockingSpi
+import org.eclipse.keyple.core.plugin.spi.reader.observable.state.removal.CardRemovalWaiterBlockingSpi
 import timber.log.Timber
 
 /**
@@ -25,85 +25,81 @@ import timber.log.Timber
  *
  * @since 1.0.0
  */
-internal class AndroidNfcReaderPostNAdapter(activity: Activity) : AbstractAndroidNfcReaderAdapter(activity), WaitForCardRemovalBlockingSpi {
+internal class AndroidNfcReaderPostNAdapter(activity: Activity) :
+    AbstractAndroidNfcReaderAdapter(activity), CardRemovalWaiterBlockingSpi {
 
-    private var isWaitingForRemoval = false
+  private var isWaitingForRemoval = false
 
-    /**
-     * Mutex used to determine when to stop waiting for card removal
-     */
-    private val syncWaitRemoval = Object()
+  /** Mutex used to determine when to stop waiting for card removal */
+  private val syncWaitRemoval = Object()
 
-    /**
-     * This method is called when the state machine changes to WAIT_FOR_SE_REMOVAL.
-     * Starts waiting for card removal.
-     *
-     * Wait duration is 10 seconds max before going timeout.
-     *
-     * @see WaitForCardRemovalBlockingSpi.stopWaitForCardRemoval
-     *
-     * @since 2.0.0
-     */
-    @TargetApi(Build.VERSION_CODES.N)
-    override fun waitForCardRemoval() {
-        Timber.d("waitForCardRemoval")
-        // Check that it is not already waiting for card removal
-        if (!isWaitingForRemoval) {
-            isWaitingForRemoval = true
+  /**
+   * This method is called when the state machine changes to WAIT_FOR_SE_REMOVAL. Starts waiting for
+   * card removal.
+   *
+   * Wait duration is 10 seconds max before going timeout.
+   *
+   * @see CardRemovalWaiterBlockingSpi.stopWaitForCardRemoval
+   *
+   * @since 2.0.0
+   */
+  @TargetApi(Build.VERSION_CODES.N)
+  override fun waitForCardRemoval() {
+    Timber.d("waitForCardRemoval")
+    // Check that it is not already waiting for card removal
+    if (!isWaitingForRemoval) {
+      isWaitingForRemoval = true
 
-            /*
-             * Listener to be called when the tag is removed from the field.
-             * Note that this will only be called if the tag has been out of range for at least DEBOUNCE_MS (= 1s),
-             * or if another tag came into range before DEBOUNCE_MS
-             */
-            val onTagRemovedListener = NfcAdapter.OnTagRemovedListener {
-                // Card has been removed
-                synchronized(syncWaitRemoval) {
-                    // Notify that the card has been removed -> stops waiting for card removal
-                    syncWaitRemoval.notify()
-                }
-            }
-
-            /*
-             * Signals that you are no longer interested in communicating with an NFC tag for as long as it remains in range.
-             * All future attempted communication to this tag will fail with IOException
-             */
-            nfcAdapter?.ignore(getTagProxyTag(), DEBOUNCE_MS, onTagRemovedListener, null)
-
+      /*
+       * Listener to be called when the tag is removed from the field.
+       * Note that this will only be called if the tag has been out of range for at least DEBOUNCE_MS (= 1s),
+       * or if another tag came into range before DEBOUNCE_MS
+       */
+      val onTagRemovedListener =
+          NfcAdapter.OnTagRemovedListener {
+            // Card has been removed
             synchronized(syncWaitRemoval) {
-                /*
-                 * Wait for card removal with a time out set by WAIT_FOR_REMOVAL_TIMEOUT (= 10s)
-                 */
-                syncWaitRemoval.wait(WAIT_FOR_REMOVAL_TIMEOUT)
+              // Notify that the card has been removed -> stops waiting for card removal
+              syncWaitRemoval.notify()
             }
-        }
-    }
+          }
 
-    /**
-     * Called when the state machine WAIT_FOR_SE_REMOVAL has been stopped.
-     *
-     * @see WaitForCardRemovalBlockingSpi.waitForCardRemoval
-     *
-     * @since 2.0.0
-     */
-    override fun stopWaitForCardRemoval() {
-        Timber.d("stopWaitForCardRemoval")
-        isWaitingForRemoval = false
-        synchronized(syncWaitRemoval) {
-            // Notifies to stop waiting for card removal
-            syncWaitRemoval.notify()
-        }
-    }
+      /*
+       * Signals that you are no longer interested in communicating with an NFC tag for as long as it remains in range.
+       * All future attempted communication to this tag will fail with IOException
+       */
+      nfcAdapter?.ignore(getTagProxyTag(), DEBOUNCE_MS, onTagRemovedListener, null)
 
-    companion object {
-        /**
-         * Minimum amount of time the tag needs to be out of range before being dispatched again.
+      synchronized(syncWaitRemoval) {
+        /*
+         * Wait for card removal with a time out set by WAIT_FOR_REMOVAL_TIMEOUT (= 10s)
          */
-        const val DEBOUNCE_MS = 1000
-
-        /**
-         * Time out when waiting for card removal (= 10s)
-         */
-        const val WAIT_FOR_REMOVAL_TIMEOUT: Long = 10000
+        syncWaitRemoval.wait(WAIT_FOR_REMOVAL_TIMEOUT)
+      }
     }
+  }
+
+  /**
+   * Called when the state machine WAIT_FOR_SE_REMOVAL has been stopped.
+   *
+   * @see CardRemovalWaiterBlockingSpi.waitForCardRemoval
+   *
+   * @since 2.0.0
+   */
+  override fun stopWaitForCardRemoval() {
+    Timber.d("stopWaitForCardRemoval")
+    isWaitingForRemoval = false
+    synchronized(syncWaitRemoval) {
+      // Notifies to stop waiting for card removal
+      syncWaitRemoval.notify()
+    }
+  }
+
+  companion object {
+    /** Minimum amount of time the tag needs to be out of range before being dispatched again. */
+    const val DEBOUNCE_MS = 1000
+
+    /** Time out when waiting for card removal (= 10s) */
+    const val WAIT_FOR_REMOVAL_TIMEOUT: Long = 10000
+  }
 }
