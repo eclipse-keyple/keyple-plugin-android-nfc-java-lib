@@ -92,17 +92,6 @@ dependencies {
 
     //logging
     implementation("org.slf4j:slf4j-api:1.7.32")
-    implementation("com.jakewharton.timber:timber:4.7.1") //Android
-    implementation("com.arcao:slf4j-timber:3.1@aar") //SLF4J binding for Timber
-
-    /** Test **/
-    testImplementation("androidx.test:core-ktx:1.3.0")
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("io.mockk:mockk:1.9")
-    testImplementation("org.robolectric:robolectric:4.3.1")
-
-    androidTestImplementation("com.android.support.test:runner:1.0.2")
-    androidTestImplementation("com.android.support.test.espresso:espresso-core:3.0.2")
 }
 
 ///////////////////////////////////////////////////////////////////////////////

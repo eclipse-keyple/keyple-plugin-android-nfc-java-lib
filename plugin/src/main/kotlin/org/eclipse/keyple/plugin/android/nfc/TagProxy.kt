@@ -18,7 +18,7 @@ import android.nfc.tech.MifareUltralight
 import android.nfc.tech.TagTechnology
 import java.io.IOException
 import org.eclipse.keyple.core.util.HexUtil
-import timber.log.Timber
+import org.slf4j.LoggerFactory
 
 /**
  * Proxy Tag for [IsoDep], [MifareClassic], [MifareUltralight] Invoke getTagTransceiver factory
@@ -95,6 +95,9 @@ private constructor(private val tagTechnology: TagTechnology, val tech: String) 
 
   companion object {
 
+    private val logger =
+        LoggerFactory.getLogger(AbstractAndroidNfcReaderAdapter.Companion::class.java)
+
     /**
      * Create a TagProxy based on a [Tag]
      *
@@ -106,7 +109,7 @@ private constructor(private val tagTechnology: TagTechnology, val tech: String) 
     @Throws(NoSuchElementException::class)
     fun getTagProxy(tag: Tag): TagProxy {
 
-      Timber.i("Matching Tag Type : $tag")
+      logger.info("Matching Tag Type : $tag")
 
       return when (tag.techList.first {
         it == AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier ||
@@ -114,18 +117,18 @@ private constructor(private val tagTechnology: TagTechnology, val tech: String) 
             it == AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier
       }) {
         AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier -> {
-          Timber.d("Tag embedded into IsoDep")
+          logger.debug("Tag embedded into IsoDep")
           TagProxy(
               IsoDep.get(tag), AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier)
         }
         AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier -> {
-          Timber.d("Tag embedded into MifareClassic")
+          logger.debug("Tag embedded into MifareClassic")
           TagProxy(
               MifareClassic.get(tag),
               AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier)
         }
         AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier -> {
-          Timber.d("Tag embedded into MifareUltralight")
+          logger.debug("Tag embedded into MifareUltralight")
           TagProxy(
               MifareUltralight.get(tag),
               AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier)

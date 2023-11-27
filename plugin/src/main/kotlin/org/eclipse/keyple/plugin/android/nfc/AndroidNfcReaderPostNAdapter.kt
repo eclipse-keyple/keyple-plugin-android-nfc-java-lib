@@ -16,7 +16,7 @@ import android.app.Activity
 import android.nfc.NfcAdapter
 import android.os.Build
 import org.eclipse.keyple.core.plugin.spi.reader.observable.state.removal.CardRemovalWaiterBlockingSpi
-import timber.log.Timber
+import org.slf4j.LoggerFactory
 
 /**
  * Singleton used by the plugin to run native NFC reader on Android version >= 24 (Android N)
@@ -28,6 +28,8 @@ import timber.log.Timber
 internal class AndroidNfcReaderPostNAdapter(activity: Activity) :
     AbstractAndroidNfcReaderAdapter(activity), CardRemovalWaiterBlockingSpi {
 
+  private val logger =
+      LoggerFactory.getLogger(AbstractAndroidNfcReaderAdapter.Companion::class.java)
   private var isWaitingForRemoval = false
 
   /** Mutex used to determine when to stop waiting for card removal */
@@ -45,7 +47,7 @@ internal class AndroidNfcReaderPostNAdapter(activity: Activity) :
    */
   @TargetApi(Build.VERSION_CODES.N)
   override fun waitForCardRemoval() {
-    Timber.d("waitForCardRemoval")
+    logger.debug("waitForCardRemoval")
     // Check that it is not already waiting for card removal
     if (!isWaitingForRemoval) {
       isWaitingForRemoval = true
@@ -72,9 +74,9 @@ internal class AndroidNfcReaderPostNAdapter(activity: Activity) :
 
       synchronized(syncWaitRemoval) {
         /*
-         * Wait for card removal with a time out set by WAIT_FOR_REMOVAL_TIMEOUT (= 10s)
+         * Await indefinitely for the card's removal. The wait can be shortened by calling the method `stopWaitForCardRemoval()`.
          */
-        syncWaitRemoval.wait(WAIT_FOR_REMOVAL_TIMEOUT)
+        syncWaitRemoval.wait(0)
       }
     }
   }
@@ -87,7 +89,7 @@ internal class AndroidNfcReaderPostNAdapter(activity: Activity) :
    * @since 2.0.0
    */
   override fun stopWaitForCardRemoval() {
-    Timber.d("stopWaitForCardRemoval")
+    logger.debug("stopWaitForCardRemoval")
     isWaitingForRemoval = false
     synchronized(syncWaitRemoval) {
       // Notifies to stop waiting for card removal
@@ -98,8 +100,5 @@ internal class AndroidNfcReaderPostNAdapter(activity: Activity) :
   companion object {
     /** Minimum amount of time the tag needs to be out of range before being dispatched again. */
     const val DEBOUNCE_MS = 1000
-
-    /** Time out when waiting for card removal (= 10s) */
-    const val WAIT_FOR_REMOVAL_TIMEOUT: Long = 10000
   }
 }

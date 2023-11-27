@@ -25,7 +25,7 @@ import org.eclipse.keyple.core.plugin.spi.reader.ConfigurableReaderSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.ObservableReaderSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.state.insertion.CardInsertionWaiterAsynchronousSpi
 import org.eclipse.keyple.core.util.HexUtil
-import timber.log.Timber
+import org.slf4j.LoggerFactory
 
 internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
     AndroidNfcReader,
@@ -33,7 +33,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
     ObservableReaderSpi,
     CardInsertionWaiterAsynchronousSpi,
     NfcAdapter.ReaderCallback {
-
+  private val logger = LoggerFactory.getLogger(Companion::class.java)
   private val INVALID_OUT_DATA_BUFFER = "Error while transmitting APDU, invalid out data buffer"
 
   private var activityWeakRef = WeakReference(activity)
@@ -41,9 +41,10 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
   private var tagProxy: TagProxy? = null
   protected var nfcAdapter: NfcAdapter? = null
 
-  private var mPresenceCheckDelay: Int? = 100
+  private var mPresenceCheckDelay: Int? = 10
   private var mNoPlateformSound: Boolean? = false
   private var mSkipNdefCheck: Boolean? = false
+  private var mIsPhysicalChannelOpen: Boolean = false
 
   private lateinit var cardInsertionWaiterAsynchronousApi: CardInsertionWaiterAsynchronousApi
 
@@ -130,15 +131,16 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
   override fun openPhysicalChannel() {
     if (tagProxy?.isConnected != true) {
       try {
-        Timber.d("Connect to tag..")
+        logger.debug("Connect to tag..")
         tagProxy?.connect()
-        Timber.i("Tag connected successfully : ${printTagId()}")
+        mIsPhysicalChannelOpen = true
+        logger.info("Tag connected successfully : ${printTagId()}")
       } catch (e: IOException) {
-        Timber.e(e, "Error while connecting to Tag ")
+        logger.error("Error while connecting to Tag ", e)
         throw ReaderIOException("Error while opening physical channel", e)
       }
     } else {
-      Timber.i("Tag is already connected to : ${printTagId()}")
+      logger.info("Tag is already connected to : ${printTagId()}")
     }
   }
 
@@ -149,18 +151,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
    */
   @Throws(ReaderIOException::class)
   override fun closePhysicalChannel() {
-    try {
-      tagProxy?.close()
-      Timber.i("Disconnected tag : ${printTagId()}")
-    } catch (e: IOException) {
-      Timber.e(e, "Disconnecting error")
-      throw ReaderIOException("IO Error while closing physical channel", e)
-    } catch (e: SecurityException) {
-      Timber.e(e, "Disconnecting error")
-      throw ReaderIOException("Security error while closing physical channel", e)
-    } finally {
-      tagProxy = null
-    }
+    mIsPhysicalChannelOpen = false
   }
 
   /**
@@ -169,7 +160,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
    * @since 2.0.0
    */
   override fun isPhysicalChannelOpen(): Boolean {
-    return tagProxy?.isConnected == true
+    return mIsPhysicalChannelOpen
   }
 
   /**
@@ -198,7 +189,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
    */
   @Throws(IllegalArgumentException::class, CardIOException::class)
   override fun transmitApdu(apduIn: ByteArray): ByteArray {
-    Timber.d("Send data to card : ${apduIn.size} bytes")
+    logger.debug("Send data to card : ${apduIn.size} bytes")
     return with(tagProxy) {
       if (this == null) {
         throw ReaderIOException(INVALID_OUT_DATA_BUFFER)
@@ -208,7 +199,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
           if (bytes.size < 2) {
             throw ReaderIOException(INVALID_OUT_DATA_BUFFER)
           } else {
-            Timber.d("Receive data from card : ${HexUtil.toHex(bytes)}")
+            logger.debug("Receive data from card : ${HexUtil.toHex(bytes)}")
             bytes
           }
         } catch (e: IOException) {
@@ -244,7 +235,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
    * @since 2.0.0
    */
   override fun onStartDetection() {
-    Timber.d("onStartDetection")
+    logger.debug("onStartDetection")
     if (activityWeakRef.get() == null) {
       throw IllegalStateException("onStartDetection() failed : no context available")
     }
@@ -257,7 +248,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
 
     val options = options
 
-    Timber.i("Enabling Read Write Mode with flags : $flags and options : $options")
+    logger.info("Enabling Read Write Mode with flags : $flags and options : $options")
 
     // Reader mode for NFC reader allows to listen to NFC events without the Intent mechanism.
     // It is active only when the activity thus the fragment is active.
@@ -270,7 +261,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
    * @since 2.0.0
    */
   override fun onStopDetection() {
-    Timber.d("onStopDetection")
+    logger.debug("onStopDetection")
     nfcAdapter?.let {
       if (activityWeakRef.get() != null) {
         it.disableReaderMode(activityWeakRef.get())
@@ -350,14 +341,14 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
    * @since 2.0.0
    */
   override fun onTagDiscovered(tag: Tag?) {
-    Timber.i("Received Tag Discovered event $tag")
+    logger.info("Received Tag Discovered event $tag")
     tag?.let {
       try {
-        Timber.i("Getting tag proxy")
+        logger.info("Getting tag proxy")
         tagProxy = TagProxy.getTagProxy(tag)
         cardInsertionWaiterAsynchronousApi.onCardInserted()
       } catch (e: NoSuchElementException) {
-        Timber.e(e)
+        logger.error("Error while getting TagProxy", e)
       }
     }
   }
