@@ -25,8 +25,8 @@ import android.app.Activity
  *       )
  * ```
  *
- * @property activity The the activity where the NFC is requested.
  * @constructor Builds instances of [AndroidNfcPluginFactory] from context provided in constructor.
+ * @property activity The the activity where the NFC is requested.
  * @since 2.0.0
  */
 class AndroidNfcPluginFactoryProvider(private val activity: Activity) : AndroidNfcPluginFactory {

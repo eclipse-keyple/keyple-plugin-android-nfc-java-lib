@@ -29,8 +29,8 @@ interface AndroidNfcReader : KeypleReaderExtension {
    * Gets a string describing the low level description of the current tag.
    *
    * Used for logging purpose
-   * @return string
    *
+   * @return string
    * @since 2.0.0
    */
   fun printTagId(): String
@@ -40,7 +40,6 @@ interface AndroidNfcReader : KeypleReaderExtension {
    * detection
    *
    * @param intent : Intent received and filterByProtocol by xml tech_list
-   *
    * @since 2.0.0
    */
   fun processIntent(intent: Intent)

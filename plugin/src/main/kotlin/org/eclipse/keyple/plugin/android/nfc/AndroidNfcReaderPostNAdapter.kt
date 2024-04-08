@@ -42,7 +42,6 @@ internal class AndroidNfcReaderPostNAdapter(activity: Activity) :
    * Wait duration is 10 seconds max before going timeout.
    *
    * @see CardRemovalWaiterBlockingSpi.stopWaitForCardRemoval
-   *
    * @since 2.0.0
    */
   @TargetApi(Build.VERSION_CODES.N)
@@ -85,7 +84,6 @@ internal class AndroidNfcReaderPostNAdapter(activity: Activity) :
    * Called when the state machine WAIT_FOR_SE_REMOVAL has been stopped.
    *
    * @see CardRemovalWaiterBlockingSpi.waitForCardRemoval
-   *
    * @since 2.0.0
    */
   override fun stopWaitForCardRemoval() {

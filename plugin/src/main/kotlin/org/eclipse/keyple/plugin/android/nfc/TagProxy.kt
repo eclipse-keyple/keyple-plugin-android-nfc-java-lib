@@ -36,7 +36,6 @@ private constructor(private val tagTechnology: TagTechnology, val tech: String) 
    * 3B8F8001804F0CA0000003060300030000000068 for Mifare Ultralight
    *
    * @return a non null ByteArray
-   *
    * @since 2.0.0
    */
   val atr: ByteArray
@@ -103,7 +102,6 @@ private constructor(private val tagTechnology: TagTechnology, val tech: String) 
      *
      * @param tag : tag to be proxied
      * @return tagProxy
-     *
      * @since 0.9
      */
     @Throws(NoSuchElementException::class)

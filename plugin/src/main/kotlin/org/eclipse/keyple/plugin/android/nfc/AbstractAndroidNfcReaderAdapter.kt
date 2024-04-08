@@ -304,9 +304,9 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
    * @since 2.0.0
    */
   override fun deactivateProtocol(readerProtocol: String) {
-    AndroidNfcSupportedProtocols.values().firstOrNull { it.name == readerProtocol }?.let {
-      activatedProtocols.remove(it)
-    }
+    AndroidNfcSupportedProtocols.values()
+        .firstOrNull { it.name == readerProtocol }
+        ?.let { activatedProtocols.remove(it) }
   }
 
   /**
@@ -357,7 +357,6 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
    * Process data from NFC Intent
    *
    * @param intent : Intent received and filterByProtocol by xml tech_list
-   *
    * @since 2.0.0
    */
   override fun processIntent(intent: Intent) {
