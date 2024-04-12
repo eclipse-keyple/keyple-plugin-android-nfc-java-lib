@@ -5,12 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.2.0] - 2024-04-12
 ### Changed
 - Java source and target levels `1.6` -> `1.8`
 - Kotlin version `1.4.20` -> `1.7.20`
 ### Upgraded
-- Keyple Plugin API `2.2.0` -> `2.3.0`
-- Keyple Util Lib `2.1.0` -> `2.3.1`
+- Keyple Plugin API `2.2.0` -> `2.3.1`
+- Keyple Util Lib `2.1.0` -> `2.4.0`
 - Gradle `6.8.3` -> `7.6.4`
 ### Fixed
 - Management of physical channel: the actual closing is now done by the card removal procedure. The associated timeout
@@ -44,7 +46,8 @@ This is the initial release.
 It follows the extraction of Keyple 1.0 components contained in the `eclipse-keyple/keyple-java` repository to dedicated repositories.
 It also brings many major API changes.
 
-[unreleased]: https://github.com/eclipse-keyple/keyple-plugin-android-nfc-java-lib/compare/2.1.0...HEAD
+[unreleased]: https://github.com/eclipse-keyple/keyple-plugin-android-nfc-java-lib/compare/2.2.0...HEAD
+[2.2.0]: https://github.com/eclipse-keyple/keyple-plugin-android-nfc-java-lib/compare/2.1.0...2.2.0
 [2.1.0]: https://github.com/eclipse-keyple/keyple-plugin-android-nfc-java-lib/compare/2.0.1...2.1.0
 [2.0.1]: https://github.com/eclipse-keyple/keyple-plugin-android-nfc-java-lib/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/eclipse-keyple/keyple-plugin-android-nfc-java-lib/releases/tag/2.0.0
