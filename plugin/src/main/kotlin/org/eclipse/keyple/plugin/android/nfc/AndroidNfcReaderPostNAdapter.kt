@@ -46,7 +46,9 @@ internal class AndroidNfcReaderPostNAdapter(activity: Activity) :
    */
   @TargetApi(Build.VERSION_CODES.N)
   override fun waitForCardRemoval() {
-    logger.debug("waitForCardRemoval")
+    if (logger.isTraceEnabled) {
+      logger.trace("Reader [{}]: start waiting card removal", name)
+    }
     // Check that it is not already waiting for card removal
     if (!isWaitingForRemoval) {
       isWaitingForRemoval = true
@@ -87,7 +89,9 @@ internal class AndroidNfcReaderPostNAdapter(activity: Activity) :
    * @since 2.0.0
    */
   override fun stopWaitForCardRemoval() {
-    logger.debug("stopWaitForCardRemoval")
+    if (logger.isTraceEnabled) {
+      logger.trace("Reader [{}]: stop waiting card removal", name)
+    }
     isWaitingForRemoval = false
     synchronized(syncWaitRemoval) {
       // Notifies to stop waiting for card removal

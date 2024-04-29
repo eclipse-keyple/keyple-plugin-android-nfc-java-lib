@@ -107,7 +107,7 @@ private constructor(private val tagTechnology: TagTechnology, val tech: String) 
     @Throws(NoSuchElementException::class)
     fun getTagProxy(tag: Tag): TagProxy {
 
-      logger.info("Matching Tag Type : $tag")
+      logger.info("Matching Tag: {}", tag)
 
       return when (tag.techList.first {
         it == AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier ||
@@ -115,25 +115,25 @@ private constructor(private val tagTechnology: TagTechnology, val tech: String) 
             it == AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier
       }) {
         AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier -> {
-          logger.debug("Tag embedded into IsoDep")
+          logger.info("Tag embedded into IsoDep")
           TagProxy(
               IsoDep.get(tag), AndroidNfcSupportedProtocols.ISO_14443_4.androidNfcTechIdentifier)
         }
         AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier -> {
-          logger.debug("Tag embedded into MifareClassic")
+          logger.info("Tag embedded into MifareClassic")
           TagProxy(
               MifareClassic.get(tag),
               AndroidNfcSupportedProtocols.MIFARE_CLASSIC.androidNfcTechIdentifier)
         }
         AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier -> {
-          logger.debug("Tag embedded into MifareUltralight")
+          logger.info("Tag embedded into MifareUltralight")
           TagProxy(
               MifareUltralight.get(tag),
               AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT.androidNfcTechIdentifier)
         }
         else ->
             throw NoSuchElementException(
-                "If received tech identifier does match a tech we can't handle.")
+                "If received tech identifier does match a tech we can't handle")
       }
     }
   }
