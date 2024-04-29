@@ -131,16 +131,21 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
   override fun openPhysicalChannel() {
     if (tagProxy?.isConnected != true) {
       try {
-        logger.debug("Connect to tag..")
+        if (logger.isDebugEnabled) {
+          logger.debug("Reader [{}]: connecting to tag...", name)
+        }
         tagProxy?.connect()
         mIsPhysicalChannelOpen = true
-        logger.info("Tag connected successfully : ${printTagId()}")
+        if (logger.isDebugEnabled) {
+          logger.debug("Reader [{}]: tag connected successfully: {}", name, printTagId())
+        }
       } catch (e: IOException) {
-        logger.error("Error while connecting to Tag ", e)
         throw ReaderIOException("Error while opening physical channel", e)
       }
     } else {
-      logger.info("Tag is already connected to : ${printTagId()}")
+      if (logger.isDebugEnabled) {
+        logger.debug("Reader [{}]: tag already connected to: {}", name, printTagId())
+      }
     }
   }
 
@@ -189,7 +194,9 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
    */
   @Throws(IllegalArgumentException::class, CardIOException::class)
   override fun transmitApdu(apduIn: ByteArray): ByteArray {
-    logger.debug("Send data to card : ${apduIn.size} bytes")
+    if (logger.isTraceEnabled) {
+      logger.trace("Reader [{}]: send data to card: {} bytes", name, apduIn.size)
+    }
     return with(tagProxy) {
       if (this == null) {
         throw ReaderIOException(INVALID_OUT_DATA_BUFFER)
@@ -199,7 +206,9 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
           if (bytes.size < 2) {
             throw ReaderIOException(INVALID_OUT_DATA_BUFFER)
           } else {
-            logger.debug("Receive data from card : ${HexUtil.toHex(bytes)}")
+            if (logger.isTraceEnabled) {
+              logger.trace("Reader [{}]: receive data from card: {}", name, HexUtil.toHex(bytes))
+            }
             bytes
           }
         } catch (e: IOException) {
@@ -235,9 +244,9 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
    * @since 2.0.0
    */
   override fun onStartDetection() {
-    logger.debug("onStartDetection")
+    logger.info("Reader [{}]: start card detection", name)
     if (activityWeakRef.get() == null) {
-      throw IllegalStateException("onStartDetection() failed : no context available")
+      throw IllegalStateException("Failed to start card detection: no context available")
     }
 
     if (nfcAdapter == null) {
@@ -248,7 +257,11 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
 
     val options = options
 
-    logger.info("Enabling Read Write Mode with flags : $flags and options : $options")
+    logger.info(
+        "Reader [{}]: enable read/write mode with flags [{}] and options [{}]",
+        name,
+        flags,
+        options)
 
     // Reader mode for NFC reader allows to listen to NFC events without the Intent mechanism.
     // It is active only when the activity thus the fragment is active.
@@ -261,7 +274,7 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
    * @since 2.0.0
    */
   override fun onStopDetection() {
-    logger.debug("onStopDetection")
+    logger.info("Reader [{}]: stop card detection", name)
     nfcAdapter?.let {
       if (activityWeakRef.get() != null) {
         it.disableReaderMode(activityWeakRef.get())
@@ -341,14 +354,14 @@ internal abstract class AbstractAndroidNfcReaderAdapter(activity: Activity) :
    * @since 2.0.0
    */
   override fun onTagDiscovered(tag: Tag?) {
-    logger.info("Received Tag Discovered event $tag")
+    logger.info("Reader [{}]: receive 'tag discovered' event: {}", name, tag)
     tag?.let {
       try {
-        logger.info("Getting tag proxy")
+        logger.info("Reader [{}]: getting tag proxy", name)
         tagProxy = TagProxy.getTagProxy(tag)
         cardInsertionWaiterAsynchronousApi.onCardInserted()
       } catch (e: NoSuchElementException) {
-        logger.error("Error while getting TagProxy", e)
+        logger.error("Reader [{}]: error while getting tag proxy: {}", name, e.message, e)
       }
     }
   }
