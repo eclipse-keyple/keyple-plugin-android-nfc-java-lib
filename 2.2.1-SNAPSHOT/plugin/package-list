@@ -1,0 +1,25 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc////PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/index.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcPlugin.Companion///PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-plugin/-companion/index.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcPlugin.Companion/PLUGIN_NAME/#/PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-plugin/-companion/-p-l-u-g-i-n_-n-a-m-e.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcPlugin///PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-plugin/index.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcPluginFactory///PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-plugin-factory/index.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcPluginFactoryProvider///PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-plugin-factory-provider/index.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcPluginFactoryProvider/AndroidNfcPluginFactoryProvider/#android.app.Activity/PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-plugin-factory-provider/-android-nfc-plugin-factory-provider.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcPluginFactoryProvider/getFactory/#/PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-plugin-factory-provider/get-factory.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcReader.Companion///PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-reader/-companion/index.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcReader.Companion/READER_NAME/#/PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-reader/-companion/-r-e-a-d-e-r_-n-a-m-e.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcReader///PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-reader/index.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcReader/noPlateformSound/#/PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-reader/no-plateform-sound.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcReader/presenceCheckDelay/#/PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-reader/presence-check-delay.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcReader/printTagId/#/PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-reader/print-tag-id.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcReader/processIntent/#android.content.Intent/PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-reader/process-intent.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcReader/skipNdefCheck/#/PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-reader/skip-ndef-check.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcSupportedProtocols.ISO_14443_4///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-supported-protocols/-i-s-o_14443_4/index.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcSupportedProtocols.MIFARE_CLASSIC///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-supported-protocols/-m-i-f-a-r-e_-c-l-a-s-s-i-c/index.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcSupportedProtocols.MIFARE_ULTRA_LIGHT///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-supported-protocols/-m-i-f-a-r-e_-u-l-t-r-a_-l-i-g-h-t/index.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcSupportedProtocols///PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-supported-protocols/index.html
+$dokka.location:org.eclipse.keyple.plugin.android.nfc/AndroidNfcSupportedProtocols/androidNfcTechIdentifier/#/PointingToDeclaration/plugin/org.eclipse.keyple.plugin.android.nfc/-android-nfc-supported-protocols/android-nfc-tech-identifier.html
+org.eclipse.keyple.plugin.android.nfc
+
