@@ -17,7 +17,7 @@ The full documentation, including the **user guide**, **download information** a
 
 ## API documentation
 
-API documentation & class diagram is available online: [eclipse-keyple.github.io/keyple-plugin-android-nfc-java-lib](https://eclipse-keyple.github.io/keyple-plugin-android-nfc-java-lib)
+API documentation & class diagram is available online: [docs.keyple.org/keyple-plugin-android-nfc-java-lib](https://docs.keyple.org/keyple-plugin-android-nfc-java-lib)
 
 ## Examples
 
