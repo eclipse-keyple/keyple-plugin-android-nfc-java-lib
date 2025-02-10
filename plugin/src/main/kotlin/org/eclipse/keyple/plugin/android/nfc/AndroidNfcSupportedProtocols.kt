@@ -11,13 +11,22 @@
  ************************************************************************************** */
 package org.eclipse.keyple.plugin.android.nfc
 
+import android.nfc.tech.IsoDep
+
 /**
- * Enum mapping Protocols to android NFC Tech identifiers.
+ * Enum representing supported NFC protocols.
  *
  * @since 2.0.0
  */
-enum class AndroidNfcSupportedProtocols(val androidNfcTechIdentifier: String) {
-  ISO_14443_4("android.nfc.tech.IsoDep"),
-  MIFARE_ULTRA_LIGHT("android.nfc.tech.MifareUltralight"),
-  MIFARE_CLASSIC("android.nfc.tech.MifareClassic")
+enum class AndroidNfcSupportedProtocols(private val techId: String) {
+
+  /**
+   * ISO 14443-4 protocol A and B.
+   *
+   * @since 2.0.0
+   */
+  ISO_14443_4(IsoDep::class.qualifiedName!!);
+
+  internal val androidNfcTechIdentifier: String
+    get() = techId
 }

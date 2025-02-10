@@ -11,48 +11,27 @@
  ************************************************************************************** */
 package org.eclipse.keyple.plugin.android.nfc
 
-import android.app.Activity
 import org.eclipse.keyple.core.common.CommonApiProperties
 import org.eclipse.keyple.core.plugin.PluginApiProperties
 import org.eclipse.keyple.core.plugin.spi.PluginFactorySpi
 import org.eclipse.keyple.core.plugin.spi.PluginSpi
 
-internal class AndroidNfcPluginFactoryAdapter(private val activity: Activity) :
+internal class AndroidNfcPluginFactoryAdapter(private val config: AndroidNfcConfig) :
     AndroidNfcPluginFactory, PluginFactorySpi {
 
-  /**
-   * {@inheritDoc}
-   *
-   * @since 2.0.0
-   */
   override fun getPluginApiVersion(): String {
     return PluginApiProperties.VERSION
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @since 2.0.0
-   */
   override fun getCommonApiVersion(): String {
     return CommonApiProperties.VERSION
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @since 2.0.0
-   */
   override fun getPluginName(): String {
-    return AndroidNfcPlugin.PLUGIN_NAME
+    return AndroidNfcConstants.PLUGIN_NAME
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @since 2.0.0
-   */
   override fun getPlugin(): PluginSpi {
-    return AndroidNfcPluginAdapter(activity)
+    return AndroidNfcPluginAdapter(config)
   }
 }

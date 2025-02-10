@@ -11,45 +11,25 @@
  ************************************************************************************** */
 package org.eclipse.keyple.plugin.android.nfc
 
-import android.app.Activity
-import android.os.Build
+import org.eclipse.keyple.core.plugin.PluginIOException
 import org.eclipse.keyple.core.plugin.spi.PluginSpi
 import org.eclipse.keyple.core.plugin.spi.reader.ReaderSpi
 
-internal class AndroidNfcPluginAdapter(private val activity: Activity) :
+internal class AndroidNfcPluginAdapter(private val config: AndroidNfcConfig) :
     AndroidNfcPlugin, PluginSpi {
 
-  /**
-   * {@inheritDoc}
-   *
-   * @since 2.0.0
-   */
   override fun getName(): String {
-    return AndroidNfcPlugin.PLUGIN_NAME
+    return AndroidNfcConstants.PLUGIN_NAME
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @since 2.0.0
-   */
-  override fun searchAvailableReaders(): MutableSet<ReaderSpi> {
-    val readerSpis = HashSet<ReaderSpi>()
-    readerSpis.add(
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-          AndroidNfcReaderPreNAdapter(activity)
-        } else {
-          AndroidNfcReaderPostNAdapter(activity)
-        })
-    return readerSpis
-  }
+  override fun searchAvailableReaders(): MutableSet<ReaderSpi> =
+      try {
+        mutableSetOf(AndroidNfcReaderAdapter(config))
+      } catch (e: Exception) {
+        throw PluginIOException("Failed to initialize Android NFC plugin", e)
+      }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @since 2.0.0
-   */
   override fun onUnregister() {
-    // Nothing to do for this plugin
+    // NOP
   }
 }

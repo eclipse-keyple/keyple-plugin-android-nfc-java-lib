@@ -5,8 +5,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Breaking changes
+- Replaced `AndroidNfcPluginFactoryProvider.getFactory()` by
+  `AndroidNfcPluginFactoryProvider.provideFactory(config: AndroidNfcConfig)`.
+- Moved `presenceCheckDelay`, `noPlateformSound`, and `skipNdefCheck` properties from
+  `AndroidNfcReader` to `AndroidNfcConfig`.
+- Removed methods `printTagId()`, `processIntent(Intent)` from `AndroidNfcReader`.
+- Removed constant `READER_NAME` from `AndroidNfcReader` to `AndroidNfcConstants`.
+- Removed constant `PLUGIN_NAME` from `AndroidNfcPlugin` to `AndroidNfcConstants`.
+- Removed support for the `CardReader.isCardPresent()` method. This method is incompatible with the
+  Android NFC model.
+### Added
+- Added `AndroidNfcConfig` to encapsulate plugin configuration.
+- Added `AndroidNfcConstants` for plugin-related constants.
+### Fixed
+- Latency issue related to card removal.
 ### Changed
-- Logging improvement.
+- Refactored `AndroidNfcPluginFactoryProvider` to provide factories with a configuration.
+- Refactored `AndroidNfcSupportedProtocols` to align with the new model.
+- Removed useless dependencies.
+- Updated Gradle wrapper.
+- Improved logging.
+### Documentation
+- Improved documentation to reflect the new event-driven model.
 
 ## [2.2.0] - 2024-04-12
 ### Changed

@@ -75,10 +75,6 @@ dependencies {
     implementation("org.eclipse.keyple:keyple-plugin-java-api:2.3.1")
     implementation("org.eclipse.keyple:keyple-util-java-lib:2.4.0")
 
-    //android
-    implementation("androidx.legacy:legacy-support-v4:1.0.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-
     //logging
     implementation("org.slf4j:slf4j-api:1.7.32")
 }

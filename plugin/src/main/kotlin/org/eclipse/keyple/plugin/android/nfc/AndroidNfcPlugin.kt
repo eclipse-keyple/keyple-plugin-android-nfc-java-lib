@@ -14,12 +14,8 @@ package org.eclipse.keyple.plugin.android.nfc
 import org.eclipse.keyple.core.common.KeyplePluginExtension
 
 /**
- * Generic type for a Keyple Android NFC plugin extension.
+ * Extends the `KeyplePluginExtension` interface.
  *
  * @since 2.0.0
  */
-interface AndroidNfcPlugin : KeyplePluginExtension {
-  companion object {
-    const val PLUGIN_NAME = "AndroidNfcPlugin"
-  }
-}
+interface AndroidNfcPlugin : KeyplePluginExtension {}

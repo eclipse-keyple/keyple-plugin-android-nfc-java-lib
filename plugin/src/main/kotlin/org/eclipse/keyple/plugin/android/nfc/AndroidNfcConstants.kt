@@ -12,19 +12,23 @@
 package org.eclipse.keyple.plugin.android.nfc
 
 /**
- * Provider of [AndroidNfcPluginFactory] instances.
+ * Constants for the Android NFC plugin.
  *
  * @since 3.0.0
  */
-object AndroidNfcPluginFactoryProvider {
+object AndroidNfcConstants {
 
   /**
-   * Provides an instance of [AndroidNfcPluginFactory].
+   * The plugin name as registered to the Keyple smart card service.
    *
-   * @param config The associated [AndroidNfcConfig].
    * @since 3.0.0
    */
-  fun provideFactory(config: AndroidNfcConfig): AndroidNfcPluginFactory {
-    return AndroidNfcPluginFactoryAdapter(config)
-  }
+  const val PLUGIN_NAME = "AndroidNfcPlugin"
+
+  /**
+   * The reader name as provided by the plugin.
+   *
+   * @since 3.0.0
+   */
+  const val READER_NAME = "AndroidNfcReader"
 }
