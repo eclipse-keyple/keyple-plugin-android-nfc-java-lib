@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>org.eclipse.keyple.plugin.android.nfc</title>
+    <link href="../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../";</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+const savedDarkMode = storage ? JSON.parse(storage) : false
+if(savedDarkMode === true){
+    document.getElementsByTagName("html")[0].classList.add("theme-dark")
+}</script>
+<script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../styles/style.css" rel="Stylesheet">
+<link href="../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../styles/main.css" rel="Stylesheet">
+<link href="../../styles/prism.css" rel="Stylesheet">
+<link href="../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../scripts/prism.js" async="async"></script>
+</head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+            <a href="../../index.html">
+                    <span>plugin</span>
+            </a>
+    </div>
+    <div>
+3.0.0-SNAPSHOT    </div>
+    <div class="pull-right d-flex">
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageIds="plugin::org.eclipse.keyple.plugin.android.nfc////PointingToDeclaration//-1853240795">
+  <div class="breadcrumbs"><a href="../../index.html">plugin</a><span class="delimiter">/</span><a href="index.html">org.eclipse.keyple.plugin.android.nfc</a></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Package</span></span> <span>org.</span><wbr></wbr><span>eclipse.</span><wbr></wbr><span>keyple.</span><wbr></wbr><span>plugin.</span><wbr></wbr><span>android.</span><wbr></wbr><span>nfc</span></h1>
+    <div class="platform-hinted UnderCoverText" data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":plugin:dokkaHtml/release"><p class="paragraph">This document specifies the API dedicated to the integration of the Android NFC plugin in an Android Keyple application.</p><h2 class=""> Observability</h2><p class="paragraph">The Android NFC plugin <strong>requires</strong> the use of the Keyple observation pattern at the reader level to handle card insertion and removal events.<br><strong>Unlike other reader implementations, Android NFC does not support continuous polling for card presence (e.g., </strong><code class="strong lang-kotlin"><strong>isCardPresent()</strong></code><strong>).</strong> Instead, it relies entirely on Android’s event-driven model.</p><p class="paragraph">To properly detect card presence and handle interactions, it is <strong>mandatory</strong> to cast Reader objects as ObservableReader and implement the appropriate interfaces from the Keyple Service SPI package.</p><p class="paragraph">Since NFC events are managed asynchronously by the Android system, <strong>working without observation is not possible</strong> in this context. Any integration of the Android NFC plugin must therefore be designed around this event-driven approach.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button></div>
+    <div class="tabs-section-body">
+      <h2 class="">Types</h2>
+      <div class="table" data-togglable="Types"><a data-name="734717864%2FClasslikes%2F-1853240795" anchor-label="AndroidNfcConfig" id="734717864%2FClasslikes%2F-1853240795" data-filterable-set=":plugin:dokkaHtml/release"></a>
+        <div class="table-row" data-filterable-current=":plugin:dokkaHtml/release" data-filterable-set=":plugin:dokkaHtml/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="-android-nfc-config/index.html"><span>Android</span><wbr></wbr><span>Nfc</span><wbr></wbr><span><span>Config</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="734717864%2FClasslikes%2F-1853240795"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":plugin:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="-android-nfc-config/index.html">AndroidNfcConfig</a><span class="token punctuation">(</span><span class="parameters wrapped"><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;<span class="token keyword">val </span>activity<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/app/Activity.html">Activity</a><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;<span class="token keyword">val </span>isPlatformSoundEnabled<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">true</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;<span class="token keyword">val </span>skipNdefCheck<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">true</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;<span class="token keyword">val </span>cardInsertionPollingInterval<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token operator"> = </span><span class="token constant">0</span><span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;<span class="token keyword">val </span>cardRemovalPollingInterval<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token operator"> = </span><span class="token constant">100</span></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Configuration class holding all the plugin options.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="347440809%2FClasslikes%2F-1853240795" anchor-label="AndroidNfcConstants" id="347440809%2FClasslikes%2F-1853240795" data-filterable-set=":plugin:dokkaHtml/release"></a>
+        <div class="table-row" data-filterable-current=":plugin:dokkaHtml/release" data-filterable-set=":plugin:dokkaHtml/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="-android-nfc-constants/index.html"><span>Android</span><wbr></wbr><span>Nfc</span><wbr></wbr><span><span>Constants</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="347440809%2FClasslikes%2F-1853240795"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":plugin:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">object </span><a href="-android-nfc-constants/index.html">AndroidNfcConstants</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Constants for the Android NFC plugin.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1485348055%2FClasslikes%2F-1853240795" anchor-label="AndroidNfcPlugin" id="1485348055%2FClasslikes%2F-1853240795" data-filterable-set=":plugin:dokkaHtml/release"></a>
+        <div class="table-row" data-filterable-current=":plugin:dokkaHtml/release" data-filterable-set=":plugin:dokkaHtml/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="-android-nfc-plugin/index.html"><span>Android</span><wbr></wbr><span>Nfc</span><wbr></wbr><span><span>Plugin</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1485348055%2FClasslikes%2F-1853240795"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":plugin:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">interface </span><a href="-android-nfc-plugin/index.html">AndroidNfcPlugin</a> : <span data-unresolved-link="org.eclipse.keyple.core.common/KeyplePluginExtension///PointingToDeclaration/">KeyplePluginExtension</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Extends the <code class="lang-kotlin">KeyplePluginExtension</code> interface.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-525886687%2FClasslikes%2F-1853240795" anchor-label="AndroidNfcPluginFactory" id="-525886687%2FClasslikes%2F-1853240795" data-filterable-set=":plugin:dokkaHtml/release"></a>
+        <div class="table-row" data-filterable-current=":plugin:dokkaHtml/release" data-filterable-set=":plugin:dokkaHtml/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="-android-nfc-plugin-factory/index.html"><span>Android</span><wbr></wbr><span>Nfc</span><wbr></wbr><span>Plugin</span><wbr></wbr><span><span>Factory</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-525886687%2FClasslikes%2F-1853240795"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":plugin:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">interface </span><a href="-android-nfc-plugin-factory/index.html">AndroidNfcPluginFactory</a> : <span data-unresolved-link="org.eclipse.keyple.core.common/KeyplePluginExtensionFactory///PointingToDeclaration/">KeyplePluginExtensionFactory</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Extends the <code class="lang-kotlin">KeyplePluginExtensionFactory</code> interface.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-840497616%2FClasslikes%2F-1853240795" anchor-label="AndroidNfcPluginFactoryProvider" id="-840497616%2FClasslikes%2F-1853240795" data-filterable-set=":plugin:dokkaHtml/release"></a>
+        <div class="table-row" data-filterable-current=":plugin:dokkaHtml/release" data-filterable-set=":plugin:dokkaHtml/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="-android-nfc-plugin-factory-provider/index.html"><span>Android</span><wbr></wbr><span>Nfc</span><wbr></wbr><span>Plugin</span><wbr></wbr><span>Factory</span><wbr></wbr><span><span>Provider</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-840497616%2FClasslikes%2F-1853240795"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":plugin:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">object </span><a href="-android-nfc-plugin-factory-provider/index.html">AndroidNfcPluginFactoryProvider</a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Provider of <a href="-android-nfc-plugin-factory/index.html">AndroidNfcPluginFactory</a> instances.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1827564217%2FClasslikes%2F-1853240795" anchor-label="AndroidNfcReader" id="-1827564217%2FClasslikes%2F-1853240795" data-filterable-set=":plugin:dokkaHtml/release"></a>
+        <div class="table-row" data-filterable-current=":plugin:dokkaHtml/release" data-filterable-set=":plugin:dokkaHtml/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="-android-nfc-reader/index.html"><span>Android</span><wbr></wbr><span>Nfc</span><wbr></wbr><span><span>Reader</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1827564217%2FClasslikes%2F-1853240795"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":plugin:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">interface </span><a href="-android-nfc-reader/index.html">AndroidNfcReader</a> : <span data-unresolved-link="org.eclipse.keyple.core.common/KeypleReaderExtension///PointingToDeclaration/">KeypleReaderExtension</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Extends the <code class="lang-kotlin">KeypleReaderExtension</code> interface.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1524847619%2FClasslikes%2F-1853240795" anchor-label="AndroidNfcSupportedProtocols" id="-1524847619%2FClasslikes%2F-1853240795" data-filterable-set=":plugin:dokkaHtml/release"></a>
+        <div class="table-row" data-filterable-current=":plugin:dokkaHtml/release" data-filterable-set=":plugin:dokkaHtml/release">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="-android-nfc-supported-protocols/index.html"><span>Android</span><wbr></wbr><span>Nfc</span><wbr></wbr><span>Supported</span><wbr></wbr><span><span>Protocols</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1524847619%2FClasslikes%2F-1853240795"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":plugin:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">enum </span><a href="-android-nfc-supported-protocols/index.html">AndroidNfcSupportedProtocols</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-enum/index.html">Enum</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-android-nfc-supported-protocols/index.html">AndroidNfcSupportedProtocols</a><span class="token operator">&gt; </span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="brief "><p class="paragraph">Enum representing supported NFC protocols.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2025 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+</body>
+</html>
