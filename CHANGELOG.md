@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Migrated the CI pipeline from Jenkins to GitHub Actions.
+- Added `keyple-plugin-storage-card-java-api:1.0.0` dependency to enable storage card support.
 
 ## [3.0.0] - 2025-02-10
 ### Breaking changes

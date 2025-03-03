@@ -22,6 +22,9 @@ dependencies {
   implementation("org.eclipse.keyple:keyple-plugin-java-api:2.3.2")
   implementation("org.eclipse.keyple:keyple-util-java-lib:2.4.0")
   implementation("org.slf4j:slf4j-api:1.7.32")
+
+  // Storage card support
+  api("org.eclipse.keyple:keyple-plugin-storagecard-java-api:1.0.0-SNAPSHOT") { isChanging = true }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
