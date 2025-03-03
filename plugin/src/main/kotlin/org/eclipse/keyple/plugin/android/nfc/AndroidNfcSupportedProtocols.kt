@@ -12,6 +12,7 @@
 package org.eclipse.keyple.plugin.android.nfc
 
 import android.nfc.tech.IsoDep
+import android.nfc.tech.MifareUltralight
 
 /**
  * Enum representing supported NFC protocols.
@@ -25,7 +26,14 @@ enum class AndroidNfcSupportedProtocols(private val techId: String) {
    *
    * @since 2.0.0
    */
-  ISO_14443_4(IsoDep::class.qualifiedName!!);
+  ISO_14443_4(IsoDep::class.qualifiedName!!),
+
+  /**
+   * NXP MIFARE Ultralight protocol.
+   *
+   * @since 3.1.0
+   */
+  NXP_MIFARE_ULTRA_LIGHT(MifareUltralight::class.qualifiedName!!);
 
   internal val androidNfcTechIdentifier: String
     get() = techId
