@@ -12,11 +12,15 @@
 package org.eclipse.keyple.plugin.android.nfc
 
 import android.app.Activity
+import org.eclipse.keyple.core.plugin.storagecard.ApduInterpreterFactory
 
 /**
  * Configuration class holding all the plugin options.
  *
  * @property activity The activity context in which NFC operations will occur.
+ * @property apduInterpreterFactory (optional, default value: `null`) The `ApduInterpreterFactory`
+ *   dedicated to the management of storage cards. The interface of this factory is provided by the
+ *   `keyple-plugin-storage-card-java-api` API, its implementation should be provided.
  * @property isPlatformSoundEnabled (optional, default value: `true`) When `true`, the platform will
  *   play sounds on tag discovery (corresponds to FLAG_READER_NO_PLATFORM_SOUNDS).
  * @property skipNdefCheck (optional, default value: `true`) When true, the NFC adapter will skip
@@ -30,6 +34,7 @@ import android.app.Activity
  */
 data class AndroidNfcConfig(
     val activity: Activity,
+    val apduInterpreterFactory: ApduInterpreterFactory? = null,
     val isPlatformSoundEnabled: Boolean = true,
     val skipNdefCheck: Boolean = true,
     val cardInsertionPollingInterval: Int = 0,
