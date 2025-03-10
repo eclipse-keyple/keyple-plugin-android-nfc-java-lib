@@ -33,7 +33,7 @@ enum class AndroidNfcSupportedProtocols(private val techId: String) {
    *
    * @since 3.1.0
    */
-  NXP_MIFARE_ULTRA_LIGHT(MifareUltralight::class.qualifiedName!!);
+  MIFARE_ULTRALIGHT(MifareUltralight::class.qualifiedName!!);
 
   internal val androidNfcTechIdentifier: String
     get() = techId

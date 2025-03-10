@@ -144,7 +144,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
             when (AndroidNfcSupportedProtocols.valueOf(readerProtocol)) {
               AndroidNfcSupportedProtocols.ISO_14443_4 ->
                   NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_NFC_A
-              AndroidNfcSupportedProtocols.NXP_MIFARE_ULTRA_LIGHT -> NfcAdapter.FLAG_READER_NFC_A
+              AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT -> NfcAdapter.FLAG_READER_NFC_A
             }
   }
 
@@ -154,8 +154,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
             when (AndroidNfcSupportedProtocols.valueOf(readerProtocol)) {
               AndroidNfcSupportedProtocols.ISO_14443_4 ->
                   (NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_NFC_A).inv()
-              AndroidNfcSupportedProtocols.NXP_MIFARE_ULTRA_LIGHT ->
-                  NfcAdapter.FLAG_READER_NFC_A.inv()
+              AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT -> NfcAdapter.FLAG_READER_NFC_A.inv()
             }
   }
 
