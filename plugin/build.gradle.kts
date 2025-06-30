@@ -3,19 +3,44 @@ import com.android.build.api.variant.AndroidComponentsExtension
 ///////////////////////////////////////////////////////////////////////////////
 //  GRADLE CONFIGURATION
 ///////////////////////////////////////////////////////////////////////////////
+
 plugins {
     id("com.android.library")
     id("kotlin-android")
     id("kotlin-parcelize")
     id("org.jetbrains.dokka")
+    `maven-publish`
+    signing
     id("com.diffplug.spotless") version "6.25.0"
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 //  APP CONFIGURATION
 ///////////////////////////////////////////////////////////////////////////////
-val kotlinVersion: String by project
+
+dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.20")
+    implementation("org.eclipse.keyple:keyple-common-java-api:2.0.1")
+    implementation("org.eclipse.keyple:keyple-plugin-java-api:2.3.1")
+    implementation("org.eclipse.keyple:keyple-util-java-lib:2.4.0")
+    implementation("org.slf4j:slf4j-api:1.7.32")
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//  STANDARD CONFIGURATION FOR ANDROID PROJECTS
+///////////////////////////////////////////////////////////////////////////////
+
+if (project.hasProperty("releaseTag")) {
+    project.version = project.property("releaseTag") as String
+    println("Release mode: version set to ${project.version}")
+} else {
+    println("Development mode: version is ${project.version}")
+}
+
+val javaSourceLevel: String by project
+val javaTargetLevel: String by project
 val archivesBaseName: String by project
+
 android {
     compileSdk = 33
 
@@ -36,8 +61,6 @@ android {
         }
     }
 
-    val javaSourceLevel: String by project
-    val javaTargetLevel: String by project
     compileOptions {
         sourceCompatibility = JavaVersion.toVersion(javaSourceLevel)
         targetCompatibility = JavaVersion.toVersion(javaTargetLevel)
@@ -65,24 +88,35 @@ android {
         getByName("androidTest").java.srcDirs("src/androidTest/kotlin")
     }
 }
-
-dependencies {
-
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.20")
-
-    //keyple
-    implementation("org.eclipse.keyple:keyple-common-java-api:2.0.1")
-    implementation("org.eclipse.keyple:keyple-plugin-java-api:2.3.1")
-    implementation("org.eclipse.keyple:keyple-util-java-lib:2.4.0")
-
-    //logging
-    implementation("org.slf4j:slf4j-api:1.7.32")
+java {
+    sourceCompatibility = JavaVersion.toVersion(javaSourceLevel)
+    targetCompatibility = JavaVersion.toVersion(javaTargetLevel)
+    println("Compiling Java $sourceCompatibility to Java $targetCompatibility.")
+    withJavadocJar()
+    withSourcesJar()
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//  TASKS CONFIGURATION
-///////////////////////////////////////////////////////////////////////////////
+fun copyLicenseFiles() {
+    val metaInfDir = File(layout.buildDirectory.get().asFile, "resources/main/META-INF")
+    val licenseFile = File(project.rootDir, "LICENSE")
+    val noticeFile = File(project.rootDir, "NOTICE.md")
+    metaInfDir.mkdirs()
+    licenseFile.copyTo(File(metaInfDir, "LICENSE"), overwrite = true)
+    noticeFile.copyTo(File(metaInfDir, "NOTICE.md"), overwrite = true)
+}
+
 tasks {
+    spotless {
+        kotlin {
+            target("src/**/*.kt")
+            licenseHeaderFile("${project.rootDir}/LICENSE_HEADER")
+            ktfmt()
+        }
+        kotlinGradle {
+            target("**/*.kts")
+            ktfmt()
+        }
+    }
     dokkaHtml.configure {
         dokkaSourceSets {
             named("main") {
@@ -92,5 +126,126 @@ tasks {
             }
         }
     }
+    javadoc {
+        dependsOn(processResources)
+        val javadocLogo = project.findProperty("javadoc.logo") as String
+        val javadocCopyright = project.findProperty("javadoc.copyright") as String
+        val titleProperty = project.findProperty("title") as String
+        (options as StandardJavadocDocletOptions).apply {
+            overview = "src/main/javadoc/overview.html"
+            windowTitle = "$titleProperty - ${project.version}"
+            header(
+                "<div style=\"margin-top: 7px\">$javadocLogo $titleProperty - ${project.version}</div>")
+            docTitle("$titleProperty - ${project.version}")
+            use(true)
+            bottom(javadocCopyright)
+            encoding = "UTF-8"
+            charSet = "UTF-8"
+            if (JavaVersion.current().isJava11Compatible) {
+                addBooleanOption("html5", true)
+                addStringOption("Xdoclint:none", "-quiet")
+            }
+        }
+        doFirst { println("Generating Javadoc for ${project.name} version ${project.version}") }
+    }
+    jar {
+        dependsOn(processResources)
+        doFirst { copyLicenseFiles() }
+        manifest {
+            attributes(
+                mapOf(
+                    "Implementation-Title" to (project.findProperty("title") as String),
+                    "Implementation-Version" to project.version,
+                    "Implementation-Vendor" to (project.findProperty("organization.name") as String),
+                    "Implementation-URL" to (project.findProperty("project.url") as String),
+                    "Specification-Title" to (project.findProperty("title") as String),
+                    "Specification-Version" to project.version,
+                    "Specification-Vendor" to (project.findProperty("organization.name") as String),
+                    "Created-By" to
+                        "${System.getProperty("java.version")} (${System.getProperty("java.vendor")})",
+                    "Build-Jdk" to System.getProperty("java.version")))
+        }
+    }
+    named<Jar>("sourcesJar") {
+        doFirst { copyLicenseFiles() }
+        manifest {
+            attributes(
+                mapOf(
+                    "Implementation-Title" to "${project.findProperty("title") as String} Sources",
+                    "Implementation-Version" to project.version))
+        }
+    }
+    named<Jar>("javadocJar") {
+        dependsOn(dokkaHtml)
+        doFirst { copyLicenseFiles() }
+        manifest {
+            attributes(
+                mapOf(
+                    "Implementation-Title" to "${project.findProperty("title") as String} Documentation",
+                    "Implementation-Version" to project.version))
+        }
+    }
 }
-apply(plugin = "org.eclipse.keyple") // To do last
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            pom {
+                name.set(project.findProperty("title") as String)
+                description.set(project.findProperty("description") as String)
+                url.set(project.findProperty("project.url") as String)
+                licenses {
+                    license {
+                        name.set(project.findProperty("license.name") as String)
+                        url.set(project.findProperty("license.url") as String)
+                        distribution.set(project.findProperty("license.distribution") as String)
+                    }
+                }
+                developers {
+                    developer {
+                        name.set(project.findProperty("developer.name") as String)
+                        email.set(project.findProperty("developer.email") as String)
+                    }
+                }
+                organization {
+                    name.set(project.findProperty("organization.name") as String)
+                    url.set(project.findProperty("organization.url") as String)
+                }
+                scm {
+                    connection.set(project.findProperty("scm.connection") as String)
+                    developerConnection.set(project.findProperty("scm.developerConnection") as String)
+                    url.set(project.findProperty("scm.url") as String)
+                }
+                ciManagement {
+                    system.set(project.findProperty("ci.system") as String)
+                    url.set(project.findProperty("ci.url") as String)
+                }
+                properties.set(
+                    mapOf(
+                        "project.build.sourceEncoding" to "UTF-8",
+                        "maven.compiler.source" to javaSourceLevel,
+                        "maven.compiler.target" to javaTargetLevel))
+            }
+        }
+    }
+    repositories {
+        maven {
+            if (project.hasProperty("sonatypeURL")) {
+                url = uri(project.property("sonatypeURL") as String)
+                credentials {
+                    username = project.property("sonatypeUsername") as String
+                    password = project.property("sonatypePassword") as String
+                }
+            }
+        }
+    }
+}
+
+signing {
+    if (project.hasProperty("releaseTag")) {
+        useGpgCmd()
+        sign(publishing.publications["mavenJava"])
+    }
+}
+
