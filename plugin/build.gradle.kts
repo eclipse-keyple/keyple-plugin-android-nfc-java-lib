@@ -8,7 +8,7 @@ plugins {
     id("kotlin-android")
     id("kotlin-parcelize")
     id("org.jetbrains.dokka")
-    id("com.diffplug.spotless")
+    id("com.diffplug.spotless") version "6.25.0"
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -68,7 +68,7 @@ android {
 
 dependencies {
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.20")
 
     //keyple
     implementation("org.eclipse.keyple:keyple-common-java-api:2.0.1")
