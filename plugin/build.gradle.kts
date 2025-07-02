@@ -6,10 +6,10 @@ plugins {
   id("com.android.library")
   id("kotlin-android")
   id("kotlin-parcelize")
+  id("com.diffplug.spotless")
   id("org.jetbrains.dokka")
-  `maven-publish`
   signing
-  id("com.diffplug.spotless") version "6.25.0"
+  `maven-publish`
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -18,8 +18,8 @@ plugins {
 
 dependencies {
   implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.20")
-  implementation("org.eclipse.keyple:keyple-common-java-api:2.0.1")
-  implementation("org.eclipse.keyple:keyple-plugin-java-api:2.3.1")
+  implementation("org.eclipse.keyple:keyple-common-java-api:2.0.2")
+  implementation("org.eclipse.keyple:keyple-plugin-java-api:2.3.2")
   implementation("org.eclipse.keyple:keyple-util-java-lib:2.4.0")
   implementation("org.slf4j:slf4j-api:1.7.32")
 }
