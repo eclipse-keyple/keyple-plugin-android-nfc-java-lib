@@ -25,7 +25,7 @@ dependencies {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//  STANDARD CONFIGURATION FOR ANDROID PROJECTS
+//  STANDARD CONFIGURATION FOR ANDROID KOTLIN-BASED PROJECTS
 ///////////////////////////////////////////////////////////////////////////////
 
 if (project.hasProperty("releaseTag")) {
@@ -35,52 +35,35 @@ if (project.hasProperty("releaseTag")) {
   println("Development mode: version is ${project.version}")
 }
 
+val title: String by project
 val javaSourceLevel: String by project
 val javaTargetLevel: String by project
-val titleProperty = project.findProperty("title") as String
 val generatedOverviewFile = layout.buildDirectory.file("tmp/overview-dokka.md")
 
 android {
-  compileSdk = 33
-
-  buildFeatures { viewBinding = true }
-
+  namespace = project.findProperty("androidLibNamespace") as String
+  compileSdk = (project.findProperty("androidCompileSdk") as String).toInt()
   defaultConfig {
-    minSdk = 24
-    testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
+    minSdk = (project.findProperty("androidMinSdk") as String).toInt()
     consumerProguardFiles("consumer-rules.pro")
   }
-
+  buildFeatures { viewBinding = true }
   buildTypes {
     getByName("release") {
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
   }
-
   compileOptions {
     sourceCompatibility = JavaVersion.toVersion(javaSourceLevel)
     targetCompatibility = JavaVersion.toVersion(javaTargetLevel)
+    println("Compiling Java $sourceCompatibility to Java $targetCompatibility")
   }
-
-  testOptions {
-    unitTests.apply {
-      isReturnDefaultValues = true // mock Log Android object
-      isIncludeAndroidResources = true
-    }
-  }
-
-  lint { abortOnError = false }
-
   kotlinOptions { jvmTarget = javaTargetLevel }
-
   sourceSets {
     getByName("main").java.srcDirs("src/main/kotlin")
     getByName("debug").java.srcDirs("src/debug/kotlin")
-    getByName("test").java.srcDirs("src/test/kotlin")
-    getByName("androidTest").java.srcDirs("src/androidTest/kotlin")
   }
-
   libraryVariants.all {
     outputs.all {
       val outputImpl = this as com.android.build.gradle.internal.api.LibraryVariantOutputImpl
@@ -90,20 +73,13 @@ android {
       outputImpl.outputFileName = newName
     }
   }
-
-  // Configuration pour publier les sources et la javadoc avec AAR
   publishing {
     singleVariant("release") {
       withSourcesJar()
-      // Pas de withJavadocJar() car on va le configurer manuellement avec Dokka
+      // No withJavadocJar(), as we'll configure it manually with Dokka
     }
   }
-}
-
-java {
-  sourceCompatibility = JavaVersion.toVersion(javaSourceLevel)
-  targetCompatibility = JavaVersion.toVersion(javaTargetLevel)
-  println("Compiling Java $sourceCompatibility to Java $targetCompatibility.")
+  lint { abortOnError = false }
 }
 
 fun copyLicenseFiles() {
@@ -136,7 +112,7 @@ tasks {
       file.parentFile.mkdirs()
       file.writeText(
           buildString {
-            appendLine("# Module $titleProperty")
+            appendLine("# Module $title")
             appendLine()
             appendLine(
                 file("src/main/kdoc/overview.md")
@@ -158,24 +134,22 @@ tasks {
         noAndroidSdkLink.set(false)
         includeNonPublic.set(false)
         includes.from(files(generatedOverviewFile))
-        moduleName.set(titleProperty)
+        moduleName.set(title)
       }
     }
     doFirst { println("Generating Dokka HTML for ${project.name} version ${project.version}") }
   }
-  // Task personnalisée pour configurer les JARs sources générés automatiquement
   withType<Jar>().configureEach {
     if (archiveClassifier.get() == "sources") {
       doFirst { copyLicenseFiles() }
       manifest {
         attributes(
             mapOf(
-                "Implementation-Title" to "${project.findProperty("title") as String} Sources",
+                "Implementation-Title" to "$title Sources",
                 "Implementation-Version" to project.version))
       }
     }
   }
-  // Task personnalisée pour créer un JAR de la javadoc avec Dokka
   register<Jar>("javadocJar") {
     dependsOn(dokkaHtml)
     archiveClassifier.set("javadoc")
@@ -184,27 +158,21 @@ tasks {
     manifest {
       attributes(
           mapOf(
-              "Implementation-Title" to "${project.findProperty("title") as String} Documentation",
+              "Implementation-Title" to "$title Documentation",
               "Implementation-Version" to project.version))
     }
   }
-  // Task pour copier les licences
   register("copyLicenseFiles") { doLast { copyLicenseFiles() } }
 }
 
 afterEvaluate {
-  // Assurer que les licences sont copiées avant l'assemblage
   tasks.named("assembleRelease") { dependsOn("copyLicenseFiles") }
   publishing {
     publications {
       create<MavenPublication>("mavenJava") {
         from(components["release"])
-
         artifactId = rootProject.name
-
-        // Ajout explicite de notre JAR javadoc personnalisé
         artifact(tasks["javadocJar"])
-
         pom {
           name.set(project.findProperty("title") as String)
           description.set(project.findProperty("description") as String)
