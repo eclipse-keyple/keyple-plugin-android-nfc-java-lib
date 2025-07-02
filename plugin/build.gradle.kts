@@ -75,8 +75,7 @@ android {
   }
   publishing {
     singleVariant("release") {
-      withSourcesJar()
-      // No withJavadocJar(), as we'll configure it manually with Dokka
+      // No withSourcesJar() and withJavadocJar(), as we'll configure them manually during release
     }
   }
   lint { abortOnError = false }
@@ -150,10 +149,23 @@ tasks {
       }
     }
   }
+  register<Jar>("sourcesJar") {
+    archiveClassifier.set("sources")
+    from(android.sourceSets.getByName("main").java.srcDirs)
+    from(layout.buildDirectory.dir("resources/main"))
+    doFirst { copyLicenseFiles() }
+    manifest {
+      attributes(
+          mapOf(
+              "Implementation-Title" to "$title Documentation",
+              "Implementation-Version" to project.version))
+    }
+  }
   register<Jar>("javadocJar") {
     dependsOn(dokkaHtml)
     archiveClassifier.set("javadoc")
     from(dokkaHtml.flatMap { it.outputDirectory })
+    from(layout.buildDirectory.dir("resources/main"))
     doFirst { copyLicenseFiles() }
     manifest {
       attributes(
@@ -172,6 +184,7 @@ afterEvaluate {
       create<MavenPublication>("mavenJava") {
         from(components["release"])
         artifactId = rootProject.name
+        artifact(tasks["sourcesJar"])
         artifact(tasks["javadocJar"])
         pom {
           name.set(project.findProperty("title") as String)
