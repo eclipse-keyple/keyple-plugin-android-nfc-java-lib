@@ -1,9 +1,5 @@
-# Package org.eclipse.keyple.plugin.android.nfc
-
 This document specifies the API dedicated to the integration of the Android NFC plugin in an Android
 Keyple application.
-
-## Observability
 
 The Android NFC plugin **requires** the use of the Keyple observation pattern at the reader level to
 handle card insertion and removal events.  
