@@ -14,6 +14,9 @@ package org.eclipse.keyple.plugin.android.nfc
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.IsoDep
+import android.nfc.tech.MifareUltralight
+import android.nfc.tech.NfcA
+import android.nfc.tech.NfcB
 import android.nfc.tech.TagTechnology
 import android.os.Bundle
 import android.os.Handler
@@ -25,7 +28,11 @@ import org.eclipse.keyple.core.plugin.spi.reader.ConfigurableReaderSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.ObservableReaderSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.state.insertion.CardInsertionWaiterAsynchronousSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.state.removal.CardRemovalWaiterBlockingSpi
+import org.eclipse.keyple.core.plugin.storagecard.internal.CommandProcessorApi
+import org.eclipse.keyple.core.plugin.storagecard.internal.spi.ApduInterpreterFactorySpi
+import org.eclipse.keyple.core.plugin.storagecard.internal.spi.ApduInterpreterSpi
 import org.eclipse.keyple.core.util.HexUtil
+import org.json.JSONObject
 import org.slf4j.LoggerFactory
 
 internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
@@ -34,6 +41,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     ObservableReaderSpi,
     CardInsertionWaiterAsynchronousSpi,
     CardRemovalWaiterBlockingSpi,
+    CommandProcessorApi,
     NfcAdapter.ReaderCallback {
 
   private val logger = LoggerFactory.getLogger(this::class.java)
@@ -42,6 +50,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   private val options: Bundle
   private val handler = Handler(Looper.getMainLooper())
   private val syncWaitRemoval = Object()
+  private val apduInterpreter: ApduInterpreterSpi?
 
   private var flags: Int
   private var tagTechnology: TagTechnology? = null
@@ -50,6 +59,12 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
 
   private lateinit var cardInsertionWaiterAsynchronousApi: CardInsertionWaiterAsynchronousApi
   private lateinit var currentCardProtocol: String
+  private lateinit var uid: ByteArray
+  private lateinit var powerOnData: String
+
+  private companion object {
+    private const val MIFARE_ULTRALIGHT_READ_SIZE = 16
+  }
 
   init {
     flags =
@@ -62,6 +77,14 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
                 NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, config.cardInsertionPollingInterval)
           }
         }
+    apduInterpreter =
+        config.apduInterpreterFactory?.let {
+          require(it is ApduInterpreterFactorySpi) {
+            "The provided ApduInterpreterFactory is not an instance of ApduInterpreterFactorySpi"
+          }
+          it.createApduInterpreter()
+        }
+    apduInterpreter?.setCommandProcessor(this)
     logger.info("{}: config initialized: {}", name, config)
   }
 
@@ -92,11 +115,15 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     throw UnsupportedOperationException("checkCardPresence() is not supported")
   }
 
-  override fun getPowerOnData(): String = HexUtil.toHex(tagTechnology?.tag?.id)
+  override fun getPowerOnData() = powerOnData
 
   override fun transmitApdu(apduIn: ByteArray): ByteArray {
     try {
-      return (tagTechnology as IsoDep).transceive(apduIn)
+      return if (apduInterpreter == null) {
+        (tagTechnology as IsoDep).transceive(apduIn)
+      } else {
+        apduInterpreter.processApdu(apduIn)
+      }
     } catch (e: Exception) {
       throw CardIOException("Error while transmitting APDU: ${e.message}", e)
     }
@@ -117,6 +144,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
             when (AndroidNfcSupportedProtocols.valueOf(readerProtocol)) {
               AndroidNfcSupportedProtocols.ISO_14443_4 ->
                   NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_NFC_A
+              AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT -> NfcAdapter.FLAG_READER_NFC_A
             }
   }
 
@@ -126,6 +154,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
             when (AndroidNfcSupportedProtocols.valueOf(readerProtocol)) {
               AndroidNfcSupportedProtocols.ISO_14443_4 ->
                   (NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_NFC_A).inv()
+              AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT -> NfcAdapter.FLAG_READER_NFC_A.inv()
             }
   }
 
@@ -196,14 +225,69 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     }
   }
 
+  override fun transmitIsoApdu(apdu: ByteArray): ByteArray {
+    return (tagTechnology as IsoDep).transceive(apdu)
+  }
+
+  override fun getUID(): ByteArray {
+    return uid
+  }
+
+  override fun readBlock(blockNumber: Int, length: Int): ByteArray {
+    require(length % MifareUltralight.PAGE_SIZE == 0) {
+      "Requested length ($length) must be a multiple of PAGE_SIZE (${MifareUltralight.PAGE_SIZE})."
+    }
+    require(blockNumber >= 0) { "Block number must be non-negative." }
+    require(length <= MIFARE_ULTRALIGHT_READ_SIZE) {
+      "Requested length ($length) exceeds maximum readable size 16 in a single operation."
+    }
+    val ultralight = tagTechnology as MifareUltralight
+    val readData = ultralight.readPages(blockNumber)
+    return if (length < MIFARE_ULTRALIGHT_READ_SIZE) {
+      readData.copyOf(length)
+    } else {
+      readData
+    }
+  }
+
+  override fun writeBlock(blockNumber: Int, data: ByteArray?) {
+    (tagTechnology as MifareUltralight).writePage(blockNumber, data)
+  }
+
   override fun onTagDiscovered(tag: Tag) {
     logger.info("{}: card discovered: {}", name, tag)
     isCardChannelOpen = false
     try {
-      when (tag.techList.first { it == IsoDep::class.qualifiedName }) {
+      for (technology in tag.techList) when (technology) {
         IsoDep::class.qualifiedName -> {
           currentCardProtocol = IsoDep::class.qualifiedName!!
           tagTechnology = IsoDep.get(tag)
+        }
+        MifareUltralight::class.qualifiedName -> {
+          currentCardProtocol = MifareUltralight::class.qualifiedName!!
+          tagTechnology = MifareUltralight.get(tag)
+        }
+        NfcA::class.qualifiedName -> {
+          val tagA = NfcA.get(tag)
+          uid = tagA.tag.id
+          powerOnData =
+              JSONObject()
+                  .put("type", "A")
+                  .put("uid", HexUtil.toHex(uid))
+                  .put("atqa", HexUtil.toHex(tagA.atqa))
+                  .put("sak", HexUtil.toHex(tagA.sak))
+                  .toString()
+        }
+        NfcB::class.qualifiedName -> {
+          val tagB = NfcB.get(tag)
+          uid = tagB.tag.id
+          powerOnData =
+              JSONObject()
+                  .put("type", "B")
+                  .put("uid", HexUtil.toHex(uid))
+                  .put("applicationData", HexUtil.toHex(tagB.applicationData))
+                  .put("protocolInfo", HexUtil.toHex(tagB.protocolInfo))
+                  .toString()
         }
         else -> logger.warn("{}: unreachable code", name)
       }
