@@ -62,8 +62,8 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   private lateinit var uid: ByteArray
   private lateinit var powerOnData: String
 
-  companion object {
-    const val MIFARE_ULTRALIGHT_READ_SIZE = 16
+  private companion object {
+    private const val MIFARE_ULTRALIGHT_READ_SIZE = 16
   }
 
   init {
