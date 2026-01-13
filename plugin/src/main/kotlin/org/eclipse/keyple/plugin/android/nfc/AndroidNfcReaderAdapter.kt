@@ -14,6 +14,7 @@ package org.eclipse.keyple.plugin.android.nfc
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.IsoDep
+import android.nfc.tech.MifareClassic
 import android.nfc.tech.MifareUltralight
 import android.nfc.tech.NfcA
 import android.nfc.tech.NfcB
@@ -21,6 +22,7 @@ import android.nfc.tech.TagTechnology
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.SparseArray
 import org.eclipse.keyple.core.plugin.CardIOException
 import org.eclipse.keyple.core.plugin.CardInsertionWaiterAsynchronousApi
 import org.eclipse.keyple.core.plugin.ReaderIOException
@@ -51,6 +53,9 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   private val handler = Handler(Looper.getMainLooper())
   private val syncWaitRemoval = Object()
   private val apduInterpreter: ApduInterpreterSpi?
+  private val volatileKeyRegistry = SparseArray<ByteArray>()
+  private val persistentKeyRegistry = SparseArray<ByteArray>()
+  private val keyProvider: KeyProvider? = config.keyProvider
 
   private var flags: Int
   private var tagTechnology: TagTechnology? = null
@@ -64,6 +69,8 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
 
   private companion object {
     private const val MIFARE_ULTRALIGHT_READ_SIZE = 16
+    private const val MIFARE_KEY_A = 0x60
+    private const val MIFARE_KEY_B = 0x61
   }
 
   init {
@@ -98,6 +105,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     try {
       tagTechnology!!.connect()
       isCardChannelOpen = true
+      volatileKeyRegistry.clear()
     } catch (e: Exception) {
       throw CardIOException("Error while opening physical channel", e)
     }
@@ -105,6 +113,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
 
   override fun closePhysicalChannel() {
     isCardChannelOpen = false
+    volatileKeyRegistry.clear()
   }
 
   override fun isPhysicalChannelOpen(): Boolean {
@@ -144,7 +153,8 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
             when (AndroidNfcSupportedProtocols.valueOf(readerProtocol)) {
               AndroidNfcSupportedProtocols.ISO_14443_4 ->
                   NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_NFC_A
-              AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT -> NfcAdapter.FLAG_READER_NFC_A
+              AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT,
+              AndroidNfcSupportedProtocols.MIFARE_CLASSIC -> NfcAdapter.FLAG_READER_NFC_A
             }
   }
 
@@ -154,7 +164,8 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
             when (AndroidNfcSupportedProtocols.valueOf(readerProtocol)) {
               AndroidNfcSupportedProtocols.ISO_14443_4 ->
                   (NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_NFC_A).inv()
-              AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT -> NfcAdapter.FLAG_READER_NFC_A.inv()
+              AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT,
+              AndroidNfcSupportedProtocols.MIFARE_CLASSIC -> NfcAdapter.FLAG_READER_NFC_A.inv()
             }
   }
 
@@ -233,16 +244,27 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     return uid
   }
 
-  override fun readBlock(blockNumber: Int, length: Int): ByteArray {
+  override fun readBlock(blockAddress: Int, length: Int): ByteArray {
+    if (tagTechnology is MifareClassic) {
+      val classic = tagTechnology as MifareClassic
+      val readData = classic.readBlock(blockAddress)
+      // Mifare Classic always reads 16 bytes.
+      return if (length < 16) {
+        readData.copyOf(length)
+      } else {
+        readData
+      }
+    }
+
     require(length % MifareUltralight.PAGE_SIZE == 0) {
       "Requested length ($length) must be a multiple of PAGE_SIZE (${MifareUltralight.PAGE_SIZE})."
     }
-    require(blockNumber >= 0) { "Block number must be non-negative." }
+    require(blockAddress >= 0) { "Block number must be non-negative." }
     require(length <= MIFARE_ULTRALIGHT_READ_SIZE) {
       "Requested length ($length) exceeds maximum readable size 16 in a single operation."
     }
     val ultralight = tagTechnology as MifareUltralight
-    val readData = ultralight.readPages(blockNumber)
+    val readData = ultralight.readPages(blockAddress)
     return if (length < MIFARE_ULTRALIGHT_READ_SIZE) {
       readData.copyOf(length)
     } else {
@@ -250,13 +272,55 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     }
   }
 
-  override fun writeBlock(blockNumber: Int, data: ByteArray?) {
-    (tagTechnology as MifareUltralight).writePage(blockNumber, data)
+  override fun writeBlock(blockAddress: Int, data: ByteArray) {
+    if (tagTechnology is MifareClassic) {
+      require(data.size == 16) {
+        "Data must be exactly 16 bytes for Mifare Classic write operations."
+      }
+      (tagTechnology as MifareClassic).writeBlock(blockAddress, data)
+    } else {
+      (tagTechnology as MifareUltralight).writePage(blockAddress, data)
+    }
+  }
+
+  override fun loadKey(isVolatileMemory: Boolean, keyNumber: Int, key: ByteArray) {
+    if (isVolatileMemory) {
+      volatileKeyRegistry.put(keyNumber, key.copyOf())
+    } else {
+      persistentKeyRegistry.put(keyNumber, key.copyOf())
+    }
+  }
+
+  override fun generalAuthenticate(blockAddress: Int, keyType: Int, keyNumber: Int) {
+    if (tagTechnology !is MifareClassic) {
+      throw CardIOException("General Authenticate is only supported for Mifare Classic.")
+    }
+    val classic = tagTechnology as MifareClassic
+    val key =
+        volatileKeyRegistry.get(keyNumber)
+            ?: persistentKeyRegistry.get(keyNumber)
+            ?: keyProvider?.getKey(keyNumber)
+            ?: throw IllegalArgumentException("No key found for key number: $keyNumber")
+
+    val sectorIndex = classic.blockToSector(blockAddress)
+    val success =
+        when (keyType) {
+          MIFARE_KEY_A -> classic.authenticateSectorWithKeyA(sectorIndex, key)
+          MIFARE_KEY_B -> classic.authenticateSectorWithKeyB(sectorIndex, key)
+          else ->
+              throw IllegalArgumentException(
+                  "Unsupported key type: 0x${Integer.toHexString(keyType)}")
+        }
+
+    if (!success) {
+      throw CardIOException("Authentication failed for block $blockAddress (Sector $sectorIndex)")
+    }
   }
 
   override fun onTagDiscovered(tag: Tag) {
     logger.info("{}: card discovered: {}", name, tag)
     isCardChannelOpen = false
+    volatileKeyRegistry.clear()
     try {
       for (technology in tag.techList) when (technology) {
         IsoDep::class.qualifiedName -> {
@@ -266,6 +330,10 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
         MifareUltralight::class.qualifiedName -> {
           currentCardProtocol = MifareUltralight::class.qualifiedName!!
           tagTechnology = MifareUltralight.get(tag)
+        }
+        MifareClassic::class.qualifiedName -> {
+          currentCardProtocol = MifareClassic::class.qualifiedName!!
+          tagTechnology = MifareClassic.get(tag)
         }
         NfcA::class.qualifiedName -> {
           val tagA = NfcA.get(tag)
