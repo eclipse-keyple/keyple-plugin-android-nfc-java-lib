@@ -31,6 +31,7 @@ import org.eclipse.keyple.core.plugin.spi.reader.observable.ObservableReaderSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.state.insertion.CardInsertionWaiterAsynchronousSpi
 import org.eclipse.keyple.core.plugin.spi.reader.observable.state.removal.CardRemovalWaiterBlockingSpi
 import org.eclipse.keyple.core.plugin.storagecard.internal.CommandProcessorApi
+import org.eclipse.keyple.core.plugin.storagecard.internal.KeyStorageType
 import org.eclipse.keyple.core.plugin.storagecard.internal.spi.ApduInterpreterFactorySpi
 import org.eclipse.keyple.core.plugin.storagecard.internal.spi.ApduInterpreterSpi
 import org.eclipse.keyple.core.util.HexUtil
@@ -283,19 +284,18 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     }
   }
 
-  override fun loadKey(isVolatileMemory: Boolean, keyNumber: Int, key: ByteArray) {
-    if (isVolatileMemory) {
-      volatileKeyRegistry.put(keyNumber, key.copyOf())
-    } else {
-      persistentKeyRegistry.put(keyNumber, key.copyOf())
-    }
+  override fun loadKey(keyStorageType: KeyStorageType, keyNumber: Int, key: ByteArray) {
+    val targetRegistry =
+        if (keyStorageType == KeyStorageType.VOLATILE) volatileKeyRegistry
+        else persistentKeyRegistry
+    targetRegistry.put(keyNumber, key.copyOf())
   }
 
-  override fun generalAuthenticate(blockAddress: Int, keyType: Int, keyNumber: Int) {
-    if (tagTechnology !is MifareClassic) {
-      throw CardIOException("General Authenticate is only supported for Mifare Classic.")
-    }
-    val classic = tagTechnology as MifareClassic
+  override fun generalAuthenticate(blockAddress: Int, keyType: Int, keyNumber: Int): Boolean {
+    val classic =
+        tagTechnology as? MifareClassic
+            ?: throw CardIOException("General Authenticate is only supported for Mifare Classic.")
+
     val key =
         volatileKeyRegistry.get(keyNumber)
             ?: persistentKeyRegistry.get(keyNumber)
@@ -303,17 +303,10 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
             ?: throw IllegalArgumentException("No key found for key number: $keyNumber")
 
     val sectorIndex = classic.blockToSector(blockAddress)
-    val success =
-        when (keyType) {
-          MIFARE_KEY_A -> classic.authenticateSectorWithKeyA(sectorIndex, key)
-          MIFARE_KEY_B -> classic.authenticateSectorWithKeyB(sectorIndex, key)
-          else ->
-              throw IllegalArgumentException(
-                  "Unsupported key type: 0x${Integer.toHexString(keyType)}")
-        }
-
-    if (!success) {
-      throw CardIOException("Authentication failed for block $blockAddress (Sector $sectorIndex)")
+    return when (keyType) {
+      MIFARE_KEY_A -> classic.authenticateSectorWithKeyA(sectorIndex, key)
+      MIFARE_KEY_B -> classic.authenticateSectorWithKeyB(sectorIndex, key)
+      else -> throw IllegalArgumentException("Unsupported key type: 0x${keyType.toString(16)}")
     }
   }
 
