@@ -245,30 +245,12 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
 
   override fun readBlock(blockAddress: Int, length: Int): ByteArray {
     return when (val tech = tagTechnology) {
-      is MifareClassic -> readMifareClassic(tech, blockAddress, length)
-      is MifareUltralight -> readMifareUltralight(tech, blockAddress, length)
+      is MifareClassic -> adjustBufferLength(tech.readBlock(blockAddress), length)
+      is MifareUltralight -> adjustBufferLength(tech.readPages(blockAddress), length)
       else ->
           throw UnsupportedOperationException(
               "Unsupported tag technology: ${tech::class.java.simpleName}")
     }
-  }
-
-  private fun readMifareClassic(
-      mifareClassic: MifareClassic,
-      blockAddress: Int,
-      length: Int
-  ): ByteArray {
-    val readData = mifareClassic.readBlock(blockAddress)
-    return adjustBufferLength(readData, length)
-  }
-
-  private fun readMifareUltralight(
-      mifareUltralight: MifareUltralight,
-      blockAddress: Int,
-      length: Int
-  ): ByteArray {
-    val readData = mifareUltralight.readPages(blockAddress)
-    return adjustBufferLength(readData, length)
   }
 
   private fun adjustBufferLength(data: ByteArray, expectedLength: Int): ByteArray {
