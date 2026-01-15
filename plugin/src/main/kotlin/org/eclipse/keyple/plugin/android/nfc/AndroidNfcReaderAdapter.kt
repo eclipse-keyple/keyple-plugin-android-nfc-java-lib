@@ -262,13 +262,12 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   }
 
   override fun writeBlock(blockAddress: Int, data: ByteArray) {
-    if (tagTechnology is MifareClassic) {
-      require(data.size == 16) {
-        "Data must be exactly 16 bytes for Mifare Classic write operations."
-      }
-      (tagTechnology as MifareClassic).writeBlock(blockAddress, data)
-    } else {
-      (tagTechnology as MifareUltralight).writePage(blockAddress, data)
+    when (val tech = tagTechnology) {
+      is MifareClassic -> tech.writeBlock(blockAddress, data)
+      is MifareUltralight -> tech.writePage(blockAddress, data)
+      else ->
+          throw UnsupportedOperationException(
+              "Unsupported tag technology: ${tech?.let { it::class.java.simpleName } ?: "null"}")
     }
   }
 
