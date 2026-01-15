@@ -290,6 +290,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
             ?: throw IllegalStateException("No key found for key number: $keyNumber")
 
     val sectorIndex = mifareClassic.blockToSector(blockAddress)
+
     return when (keyType) {
       MIFARE_KEY_A -> mifareClassic.authenticateSectorWithKeyA(sectorIndex, usedKey)
       MIFARE_KEY_B -> mifareClassic.authenticateSectorWithKeyB(sectorIndex, usedKey)
