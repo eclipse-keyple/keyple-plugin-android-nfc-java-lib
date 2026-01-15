@@ -35,6 +35,7 @@ import org.eclipse.keyple.core.plugin.storagecard.internal.KeyStorageType
 import org.eclipse.keyple.core.plugin.storagecard.internal.spi.ApduInterpreterFactorySpi
 import org.eclipse.keyple.core.plugin.storagecard.internal.spi.ApduInterpreterSpi
 import org.eclipse.keyple.core.util.HexUtil
+import org.eclipse.keyple.plugin.android.nfc.spi.KeyProvider
 import org.json.JSONObject
 import org.slf4j.LoggerFactory
 

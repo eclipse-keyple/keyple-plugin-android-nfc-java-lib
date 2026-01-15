@@ -19,11 +19,11 @@ package org.eclipse.keyple.plugin.android.nfc.spi
 interface KeyProvider {
 
   /**
-   * Retrieves the key associated with the given key index.
+   * Retrieves the key associated with the given key number.
    *
-   * @param keyIndex The index of the key requested.
+   * @param keyNumber The number of the key requested.
    * @return The key as a byte array, or null if not found.
    * @since 3.2.0
    */
-  fun getKey(keyIndex: Int): ByteArray?
+  fun getKey(keyNumber: Int): ByteArray?
 }
