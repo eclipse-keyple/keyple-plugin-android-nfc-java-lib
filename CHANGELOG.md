@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added `MIFARE_CLASSIC` support in `AndroidNfcSupportedProtocols`.
+- Added `KeyProvider` interface to allow providing authentication keys dynamically.
+- Added `keyProvider` property to `AndroidNfcConfig`.
+### Upgraded
+- `keyple-plugin-storagecard-java-api` `1.0.0` -> `1.1.0`
+### Documentation
+- Updated overview documentation to clarify configuration and storage card support.
 
 ## [3.1.0] - 2025-07-08
 ### Added
