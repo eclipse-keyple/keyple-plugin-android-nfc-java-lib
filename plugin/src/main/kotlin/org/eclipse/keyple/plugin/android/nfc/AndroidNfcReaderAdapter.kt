@@ -263,19 +263,8 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
       blockAddress: Int,
       length: Int
   ): ByteArray {
-    validateUltralightParams(blockAddress, length)
     val readData = ultralight.readPages(blockAddress)
     return adjustBufferLength(readData, length)
-  }
-
-  private fun validateUltralightParams(blockAddress: Int, length: Int) {
-    require(blockAddress >= 0) { "Block number must be non-negative." }
-    require(length % MifareUltralight.PAGE_SIZE == 0) {
-      "Length ($length) must be a multiple of PAGE_SIZE (${MifareUltralight.PAGE_SIZE})."
-    }
-    require(length <= MIFARE_ULTRALIGHT_READ_SIZE) {
-      "Length ($length) exceeds max readable size ($MIFARE_ULTRALIGHT_READ_SIZE)."
-    }
   }
 
   private fun adjustBufferLength(data: ByteArray, expectedLength: Int): ByteArray {
