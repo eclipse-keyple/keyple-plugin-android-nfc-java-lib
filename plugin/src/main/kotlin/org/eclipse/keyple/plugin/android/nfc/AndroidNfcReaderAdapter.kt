@@ -113,7 +113,6 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
 
   override fun closePhysicalChannel() {
     isCardChannelOpen = false
-    loadedKey = null
   }
 
   override fun isPhysicalChannelOpen(): Boolean {
@@ -245,30 +244,45 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   }
 
   override fun readBlock(blockAddress: Int, length: Int): ByteArray {
-    if (tagTechnology is MifareClassic) {
-      val classic = tagTechnology as MifareClassic
-      val readData = classic.readBlock(blockAddress)
-      // Mifare Classic always reads 16 bytes.
-      return if (length < 16) {
-        readData.copyOf(length)
-      } else {
-        readData
-      }
+    return when (val tech = tagTechnology) {
+      is MifareClassic -> readMifareClassic(tech, blockAddress, length)
+      is MifareUltralight -> readMifareUltralight(tech, blockAddress, length)
+      else ->
+          throw UnsupportedOperationException(
+              "Unsupported tag technology: ${tech::class.java.simpleName}")
     }
+  }
 
-    require(length % MifareUltralight.PAGE_SIZE == 0) {
-      "Requested length ($length) must be a multiple of PAGE_SIZE (${MifareUltralight.PAGE_SIZE})."
-    }
-    require(blockAddress >= 0) { "Block number must be non-negative." }
-    require(length <= MIFARE_ULTRALIGHT_READ_SIZE) {
-      "Requested length ($length) exceeds maximum readable size 16 in a single operation."
-    }
-    val ultralight = tagTechnology as MifareUltralight
+  private fun readMifareClassic(classic: MifareClassic, blockAddress: Int, length: Int): ByteArray {
+    val readData = classic.readBlock(blockAddress)
+    return adjustBufferLength(readData, length)
+  }
+
+  private fun readMifareUltralight(
+      ultralight: MifareUltralight,
+      blockAddress: Int,
+      length: Int
+  ): ByteArray {
+    validateUltralightParams(blockAddress, length)
     val readData = ultralight.readPages(blockAddress)
-    return if (length < MIFARE_ULTRALIGHT_READ_SIZE) {
-      readData.copyOf(length)
+    return adjustBufferLength(readData, length)
+  }
+
+  private fun validateUltralightParams(blockAddress: Int, length: Int) {
+    require(blockAddress >= 0) { "Block number must be non-negative." }
+    require(length % MifareUltralight.PAGE_SIZE == 0) {
+      "Length ($length) must be a multiple of PAGE_SIZE (${MifareUltralight.PAGE_SIZE})."
+    }
+    require(length <= MIFARE_ULTRALIGHT_READ_SIZE) {
+      "Length ($length) exceeds max readable size ($MIFARE_ULTRALIGHT_READ_SIZE)."
+    }
+  }
+
+  private fun adjustBufferLength(data: ByteArray, expectedLength: Int): ByteArray {
+    return if (expectedLength < data.size) {
+      data.copyOf(expectedLength)
     } else {
-      readData
+      data
     }
   }
 
