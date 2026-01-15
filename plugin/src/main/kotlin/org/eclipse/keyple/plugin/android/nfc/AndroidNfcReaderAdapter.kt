@@ -253,17 +253,21 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     }
   }
 
-  private fun readMifareClassic(classic: MifareClassic, blockAddress: Int, length: Int): ByteArray {
-    val readData = classic.readBlock(blockAddress)
+  private fun readMifareClassic(
+      mifareClassic: MifareClassic,
+      blockAddress: Int,
+      length: Int
+  ): ByteArray {
+    val readData = mifareClassic.readBlock(blockAddress)
     return adjustBufferLength(readData, length)
   }
 
   private fun readMifareUltralight(
-      ultralight: MifareUltralight,
+      mifareUltralight: MifareUltralight,
       blockAddress: Int,
       length: Int
   ): ByteArray {
-    val readData = ultralight.readPages(blockAddress)
+    val readData = mifareUltralight.readPages(blockAddress)
     return adjustBufferLength(readData, length)
   }
 
