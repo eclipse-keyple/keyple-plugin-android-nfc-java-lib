@@ -1,5 +1,5 @@
 /* **************************************************************************************
- * Copyright (c) 2025 Calypso Networks Association https://calypsonet.org/
+ * Copyright (c) 2026 Calypso Networks Association https://calypsonet.org/
  *
  * See the NOTICE file(s) distributed with this work for additional information
  * regarding copyright ownership.
@@ -9,7 +9,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  ************************************************************************************** */
-package org.eclipse.keyple.plugin.android.nfc
+package org.eclipse.keyple.plugin.android.nfc.spi
 
 /**
  * Interface allowing the application to provide authentication keys dynamically.
@@ -23,6 +23,7 @@ interface KeyProvider {
    *
    * @param keyIndex The index of the key requested.
    * @return The key as a byte array, or null if not found.
+   * @since 3.2.0
    */
   fun getKey(keyIndex: Int): ByteArray?
 }
