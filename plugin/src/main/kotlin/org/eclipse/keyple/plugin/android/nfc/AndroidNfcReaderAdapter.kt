@@ -22,7 +22,6 @@ import android.nfc.tech.TagTechnology
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.SparseArray
 import org.eclipse.keyple.core.plugin.CardIOException
 import org.eclipse.keyple.core.plugin.CardInsertionWaiterAsynchronousApi
 import org.eclipse.keyple.core.plugin.ReaderIOException
@@ -55,8 +54,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   private val handler = Handler(Looper.getMainLooper())
   private val syncWaitRemoval = Object()
   private val apduInterpreter: ApduInterpreterSpi?
-  private val volatileKeyRegistry = SparseArray<ByteArray>()
-  private val persistentKeyRegistry = SparseArray<ByteArray>()
+  private var loadedKey: ByteArray? = null
   private val keyProvider: KeyProvider? = config.keyProvider
 
   private var flags: Int
@@ -107,7 +105,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     try {
       tagTechnology!!.connect()
       isCardChannelOpen = true
-      volatileKeyRegistry.clear()
+      loadedKey = null
     } catch (e: Exception) {
       throw CardIOException("Error while opening physical channel", e)
     }
@@ -115,7 +113,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
 
   override fun closePhysicalChannel() {
     isCardChannelOpen = false
-    volatileKeyRegistry.clear()
+    loadedKey = null
   }
 
   override fun isPhysicalChannelOpen(): Boolean {
@@ -286,10 +284,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   }
 
   override fun loadKey(keyStorageType: KeyStorageType, keyNumber: Int, key: ByteArray) {
-    val targetRegistry =
-        if (keyStorageType == KeyStorageType.VOLATILE) volatileKeyRegistry
-        else persistentKeyRegistry
-    targetRegistry.put(keyNumber, key.copyOf())
+    loadedKey = key.copyOf()
   }
 
   override fun generalAuthenticate(blockAddress: Int, keyType: Int, keyNumber: Int): Boolean {
@@ -297,16 +292,22 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
         tagTechnology as? MifareClassic
             ?: throw CardIOException("General Authenticate is only supported for Mifare Classic.")
 
-    val key =
-        volatileKeyRegistry.get(keyNumber)
-            ?: persistentKeyRegistry.get(keyNumber)
-            ?: keyProvider?.getKey(keyNumber)
-            ?: throw IllegalArgumentException("No key found for key number: $keyNumber")
+    val key = loadedKey
+    loadedKey = null
+
+    val usedKey =
+        key
+            ?: if (keyProvider == null) {
+              throw IllegalStateException("No key loaded and no key provider available.")
+            } else {
+              keyProvider.getKey(keyNumber)
+                  ?: throw IllegalStateException("No key found for key number: $keyNumber")
+            }
 
     val sectorIndex = classic.blockToSector(blockAddress)
     return when (keyType) {
-      MIFARE_KEY_A -> classic.authenticateSectorWithKeyA(sectorIndex, key)
-      MIFARE_KEY_B -> classic.authenticateSectorWithKeyB(sectorIndex, key)
+      MIFARE_KEY_A -> classic.authenticateSectorWithKeyA(sectorIndex, usedKey)
+      MIFARE_KEY_B -> classic.authenticateSectorWithKeyB(sectorIndex, usedKey)
       else -> throw IllegalArgumentException("Unsupported key type: 0x${keyType.toString(16)}")
     }
   }
@@ -314,7 +315,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   override fun onTagDiscovered(tag: Tag) {
     logger.info("{}: card discovered: {}", name, tag)
     isCardChannelOpen = false
-    volatileKeyRegistry.clear()
+    loadedKey = null
     try {
       for (technology in tag.techList) when (technology) {
         IsoDep::class.qualifiedName -> {
