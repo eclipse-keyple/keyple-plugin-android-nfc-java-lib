@@ -249,7 +249,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
       is MifareUltralight -> adjustBufferLength(tech.readPages(blockAddress), length)
       else ->
           throw UnsupportedOperationException(
-              "Unsupported tag technology: ${tech::class.java.simpleName}")
+              "Unsupported tag technology: ${tech?.let { it::class.java.simpleName } ?: "null"}")
     }
   }
 
