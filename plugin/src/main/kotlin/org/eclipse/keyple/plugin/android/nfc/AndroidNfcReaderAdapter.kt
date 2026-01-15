@@ -276,7 +276,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   }
 
   override fun generalAuthenticate(blockAddress: Int, keyType: Int, keyNumber: Int): Boolean {
-    val classic =
+    val mifareClassic =
         tagTechnology as? MifareClassic
             ?: throw CardIOException("General Authenticate is only supported for Mifare Classic.")
 
@@ -285,17 +285,14 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
 
     val usedKey =
         key
-            ?: if (keyProvider == null) {
-              throw IllegalStateException("No key loaded and no key provider available.")
-            } else {
-              keyProvider.getKey(keyNumber)
-                  ?: throw IllegalStateException("No key found for key number: $keyNumber")
-            }
+            ?: checkNotNull(keyProvider) { "No key loaded and no key provider available." }
+                .getKey(keyNumber)
+            ?: throw IllegalStateException("No key found for key number: $keyNumber")
 
-    val sectorIndex = classic.blockToSector(blockAddress)
+    val sectorIndex = mifareClassic.blockToSector(blockAddress)
     return when (keyType) {
-      MIFARE_KEY_A -> classic.authenticateSectorWithKeyA(sectorIndex, usedKey)
-      MIFARE_KEY_B -> classic.authenticateSectorWithKeyB(sectorIndex, usedKey)
+      MIFARE_KEY_A -> mifareClassic.authenticateSectorWithKeyA(sectorIndex, usedKey)
+      MIFARE_KEY_B -> mifareClassic.authenticateSectorWithKeyB(sectorIndex, usedKey)
       else -> throw IllegalArgumentException("Unsupported key type: 0x${keyType.toString(16)}")
     }
   }
@@ -303,7 +300,6 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   override fun onTagDiscovered(tag: Tag) {
     logger.info("{}: card discovered: {}", name, tag)
     isCardChannelOpen = false
-    loadedKey = null
     try {
       for (technology in tag.techList) when (technology) {
         IsoDep::class.qualifiedName -> {
