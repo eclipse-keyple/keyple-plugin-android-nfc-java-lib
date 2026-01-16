@@ -143,26 +143,8 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     // NOP
   }
 
-  override fun isProtocolSupported(readerProtocol: String): Boolean {
-    val protocol =
-        AndroidNfcSupportedProtocols.values().firstOrNull { it.name == readerProtocol }
-            ?: return false
-
-    // For MIFARE Classic, check the actual card size to distinguish between 1K and 4K
-    if (protocol == AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K ||
-        protocol == AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K) {
-      val mifareClassic = tagTechnology as? MifareClassic ?: return false
-      return when (protocol) {
-        AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K ->
-            mifareClassic.size == MifareClassic.SIZE_1K
-        AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K ->
-            mifareClassic.size == MifareClassic.SIZE_4K
-        else -> false
-      }
-    }
-
-    return true
-  }
+  override fun isProtocolSupported(readerProtocol: String): Boolean =
+      AndroidNfcSupportedProtocols.values().any { it.name == readerProtocol }
 
   override fun activateProtocol(readerProtocol: String) {
     flags =
@@ -188,9 +170,29 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
             }
   }
 
-  override fun isCurrentProtocol(readerProtocol: String): Boolean =
-      AndroidNfcSupportedProtocols.valueOf(readerProtocol).androidNfcTechIdentifier ==
-          currentCardProtocol
+  override fun isCurrentProtocol(readerProtocol: String): Boolean {
+    val protocol = AndroidNfcSupportedProtocols.valueOf(readerProtocol)
+
+    // Check if the technology identifier matches
+    if (protocol.androidNfcTechIdentifier != currentCardProtocol) {
+      return false
+    }
+
+    // For MIFARE Classic, check the actual card size to distinguish between 1K and 4K
+    if (protocol == AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K ||
+        protocol == AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K) {
+      val mifareClassic = tagTechnology as? MifareClassic ?: return false
+      return when (protocol) {
+        AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K ->
+            mifareClassic.size == MifareClassic.SIZE_1K
+        AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K ->
+            mifareClassic.size == MifareClassic.SIZE_4K
+        else -> false
+      }
+    }
+
+    return true
+  }
 
   override fun onStartDetection() {
     logger.info("{}: start card detection", name)

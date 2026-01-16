@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Added `MIFARE_CLASSIC` support in `AndroidNfcSupportedProtocols`.
+- Added `MIFARE_CLASSIC_1K` and `MIFARE_CLASSIC_4K` support in `AndroidNfcSupportedProtocols`.
 - Added `KeyProvider` interface to allow providing authentication keys dynamically.
 - Added `keyProvider` property to `AndroidNfcConfig`.
 ### Upgraded
