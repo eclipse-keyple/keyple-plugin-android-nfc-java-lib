@@ -143,8 +143,26 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     // NOP
   }
 
-  override fun isProtocolSupported(readerProtocol: String): Boolean =
-      AndroidNfcSupportedProtocols.values().any { it.name == readerProtocol }
+  override fun isProtocolSupported(readerProtocol: String): Boolean {
+    val protocol =
+        AndroidNfcSupportedProtocols.values().firstOrNull { it.name == readerProtocol }
+            ?: return false
+
+    // For MIFARE Classic, check the actual card size to distinguish between 1K and 4K
+    if (protocol == AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K ||
+        protocol == AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K) {
+      val mifareClassic = tagTechnology as? MifareClassic ?: return false
+      return when (protocol) {
+        AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K ->
+            mifareClassic.size == MifareClassic.SIZE_1K
+        AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K ->
+            mifareClassic.size == MifareClassic.SIZE_4K
+        else -> false
+      }
+    }
+
+    return true
+  }
 
   override fun activateProtocol(readerProtocol: String) {
     flags =
@@ -153,7 +171,8 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
               AndroidNfcSupportedProtocols.ISO_14443_4 ->
                   NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_NFC_A
               AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT,
-              AndroidNfcSupportedProtocols.MIFARE_CLASSIC -> NfcAdapter.FLAG_READER_NFC_A
+              AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K,
+              AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K -> NfcAdapter.FLAG_READER_NFC_A
             }
   }
 
@@ -164,7 +183,8 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
               AndroidNfcSupportedProtocols.ISO_14443_4 ->
                   (NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_NFC_A).inv()
               AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT,
-              AndroidNfcSupportedProtocols.MIFARE_CLASSIC -> NfcAdapter.FLAG_READER_NFC_A.inv()
+              AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K,
+              AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K -> NfcAdapter.FLAG_READER_NFC_A.inv()
             }
   }
 
