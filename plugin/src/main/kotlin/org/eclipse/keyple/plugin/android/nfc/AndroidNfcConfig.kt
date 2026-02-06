@@ -42,5 +42,5 @@ data class AndroidNfcConfig(
     val skipNdefCheck: Boolean = true,
     val cardInsertionPollingInterval: Int = 0,
     val cardRemovalPollingInterval: Int = 100,
-    val keyProvider: KeyProvider? = null
+    val keyProvider: KeyProvider? = null,
 )

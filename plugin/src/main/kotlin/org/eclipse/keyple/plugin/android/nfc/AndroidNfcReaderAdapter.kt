@@ -34,6 +34,7 @@ import org.eclipse.keyple.core.plugin.storagecard.internal.KeyStorageType
 import org.eclipse.keyple.core.plugin.storagecard.internal.spi.ApduInterpreterFactorySpi
 import org.eclipse.keyple.core.plugin.storagecard.internal.spi.ApduInterpreterSpi
 import org.eclipse.keyple.core.util.HexUtil
+import org.eclipse.keyple.core.util.json.JsonUtil
 import org.eclipse.keyple.plugin.android.nfc.spi.KeyProvider
 import org.json.JSONObject
 import org.slf4j.LoggerFactory
@@ -47,7 +48,11 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     CommandProcessorApi,
     NfcAdapter.ReaderCallback {
 
-  private val logger = LoggerFactory.getLogger(this::class.java)
+  private companion object {
+    private val logger = LoggerFactory.getLogger(AndroidNfcReaderAdapter::class.java)
+    private const val MIFARE_KEY_A = 0x60
+    private const val MIFARE_KEY_B = 0x61
+  }
 
   private val nfcAdapter: NfcAdapter = NfcAdapter.getDefaultAdapter(config.activity)
   private val options: Bundle
@@ -67,12 +72,6 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   private lateinit var uid: ByteArray
   private lateinit var powerOnData: String
 
-  private companion object {
-    private const val MIFARE_ULTRALIGHT_READ_SIZE = 16
-    private const val MIFARE_KEY_A = 0x60
-    private const val MIFARE_KEY_B = 0x61
-  }
-
   init {
     flags =
         (if (config.skipNdefCheck) NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK else 0) or
@@ -81,7 +80,9 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
         Bundle().apply {
           if (config.cardInsertionPollingInterval > 0) {
             putInt(
-                NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, config.cardInsertionPollingInterval)
+                NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY,
+                config.cardInsertionPollingInterval,
+            )
           }
         }
     apduInterpreter =
@@ -92,14 +93,18 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
           it.createApduInterpreter()
         }
     apduInterpreter?.setCommandProcessor(this)
-    logger.info("{}: config initialized: {}", name, config)
+    if (logger.isDebugEnabled) {
+      logger.debug("Reader initialized [config={}]", config)
+    }
   }
 
   override fun getName(): String = AndroidNfcConstants.READER_NAME
 
   override fun openPhysicalChannel() {
     if (tagTechnology!!.isConnected) {
-      logger.info("{}: card already connected", name)
+      if (logger.isDebugEnabled) {
+        logger.debug("Card already connected")
+      }
       return
     }
     try {
@@ -107,7 +112,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
       isCardChannelOpen = true
       loadedKey = null
     } catch (e: Exception) {
-      throw CardIOException("Error while opening physical channel", e)
+      throw CardIOException("Failed to open physical channel", e)
     }
   }
 
@@ -120,7 +125,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   }
 
   override fun checkCardPresence(): Boolean {
-    throw UnsupportedOperationException("checkCardPresence() is not supported")
+    throw UnsupportedOperationException("checkCardPresence() method is not supported")
   }
 
   override fun getPowerOnData() = powerOnData
@@ -133,7 +138,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
         apduInterpreter.processApdu(apduIn)
       }
     } catch (e: Exception) {
-      throw CardIOException("Error while transmitting APDU: ${e.message}", e)
+      throw CardIOException("Failed to transmit APDU", e)
     }
   }
 
@@ -179,8 +184,10 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     }
 
     // For MIFARE Classic, check the actual card size to distinguish between 1K and 4K
-    if (protocol == AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K ||
-        protocol == AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K) {
+    if (
+        protocol == AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K ||
+            protocol == AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K
+    ) {
       val mifareClassic = tagTechnology as? MifareClassic ?: return false
       return when (protocol) {
         AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K ->
@@ -195,20 +202,30 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   }
 
   override fun onStartDetection() {
-    logger.info("{}: start card detection", name)
+    if (logger.isDebugEnabled) {
+      logger.debug("Starting card detection")
+    }
     try {
       nfcAdapter.enableReaderMode(config.activity, this, flags, options)
+      if (logger.isDebugEnabled) {
+        logger.debug("Card detection started")
+      }
     } catch (e: Exception) {
-      throw ReaderIOException("Failed to start NFC detection", e)
+      throw ReaderIOException("Failed to start card detection", e)
     }
   }
 
   override fun onStopDetection() {
-    logger.info("{}: stop card detection", name)
+    if (logger.isDebugEnabled) {
+      logger.debug("Stopping card detection")
+    }
     try {
       nfcAdapter.disableReaderMode(config.activity)
+      if (logger.isDebugEnabled) {
+        logger.debug("Card detection stopped")
+      }
     } catch (e: Exception) {
-      throw ReaderIOException("Failed to stop NFC detection", e)
+      throw ReaderIOException("Failed to stop card detection", e)
     }
   }
 
@@ -219,7 +236,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   override fun waitForCardRemoval() {
     if (!isWaitingForCardRemoval) {
       if (logger.isDebugEnabled) {
-        logger.debug("{}: waiting for card removal", name)
+        logger.debug("Waiting for card removal...")
       }
       isWaitingForCardRemoval = true
       handler.post(tagPresenceChecker)
@@ -251,7 +268,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
       tagTechnology?.isConnected == true
     } catch (_: Exception) {
       if (logger.isDebugEnabled) {
-        logger.debug("{}: card removed", name)
+        logger.debug("Card removed")
       }
       false
     }
@@ -271,7 +288,8 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
       is MifareUltralight -> adjustBufferLength(tech.readPages(blockAddress), length)
       else ->
           throw UnsupportedOperationException(
-              "Unsupported tag technology: ${tech?.let { it::class.java.simpleName } ?: "null"}")
+              "Unsupported tag technology: ${tech?.let { it::class.java.simpleName } ?: "null"}"
+          )
     }
   }
 
@@ -289,7 +307,8 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
       is MifareUltralight -> tech.writePage(blockAddress, data)
       else ->
           throw UnsupportedOperationException(
-              "Unsupported tag technology: ${tech?.let { it::class.java.simpleName } ?: "null"}")
+              "Unsupported tag technology: ${tech?.let { it::class.java.simpleName } ?: "null"}"
+          )
     }
   }
 
@@ -300,14 +319,14 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   override fun generalAuthenticate(blockAddress: Int, keyType: Int, keyNumber: Int): Boolean {
     val mifareClassic =
         tagTechnology as? MifareClassic
-            ?: throw CardIOException("General Authenticate is only supported for Mifare Classic.")
+            ?: throw CardIOException("General Authenticate is only supported for Mifare Classic")
 
     val key = loadedKey
     loadedKey = null
 
     val usedKey =
         key
-            ?: checkNotNull(keyProvider) { "No key loaded and no key provider available." }
+            ?: checkNotNull(keyProvider) { "No key loaded and no key provider available" }
                 .getKey(keyNumber)
             ?: throw IllegalStateException("No key found for key number: $keyNumber")
 
@@ -316,12 +335,14 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     return when (keyType) {
       MIFARE_KEY_A -> mifareClassic.authenticateSectorWithKeyA(sectorIndex, usedKey)
       MIFARE_KEY_B -> mifareClassic.authenticateSectorWithKeyB(sectorIndex, usedKey)
-      else -> throw IllegalArgumentException("Unsupported key type: 0x${keyType.toString(16)}")
+      else -> throw IllegalArgumentException("Unsupported key type: 0x${HexUtil.toHex(keyType)}")
     }
   }
 
   override fun onTagDiscovered(tag: Tag) {
-    logger.info("{}: card discovered: {}", name, tag)
+    if (logger.isDebugEnabled) {
+      logger.debug("Card detected [tag={}]", JsonUtil.toJson(tag))
+    }
     isCardChannelOpen = false
     try {
       for (technology in tag.techList) when (technology) {
