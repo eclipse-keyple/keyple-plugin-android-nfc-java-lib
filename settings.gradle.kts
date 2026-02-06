@@ -4,17 +4,17 @@ include(":plugin")
 pluginManagement {
   repositories {
     gradlePluginPortal()
-    mavenCentral()
     google()
+    mavenCentral()
   }
 }
 
 dependencyResolutionManagement {
   repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
   repositories {
-    mavenLocal()
-    mavenCentral()
     google()
+    mavenCentral()
+    mavenLocal()
     maven(url = "https://central.sonatype.com/repository/maven-snapshots")
   }
 }
