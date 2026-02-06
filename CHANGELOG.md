@@ -5,12 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [3.2.0] - 2026-02-06
 ### Added
 - Added `MIFARE_CLASSIC_1K` and `MIFARE_CLASSIC_4K` support in `AndroidNfcSupportedProtocols`.
 - Added `KeyProvider` interface to allow providing authentication keys dynamically.
 - Added `keyProvider` property to `AndroidNfcConfig`.
 ### Upgraded
-- `keyple-plugin-storagecard-java-api` `1.0.0` -> `1.1.0`
+- `keyple-plugin-storagecard-java-api` from `1.0.0` to `1.1.0`
+- `keyple-util-java-lib` from `2.4.0` to `2.4.1`
+- `slf4j-api` from `1.7.32` to `1.7.36` (compileOnly)
 ### Documentation
 - Updated overview documentation to clarify configuration and storage card support.
 
@@ -85,7 +89,8 @@ This is the initial release.
 It follows the extraction of Keyple 1.0 components contained in the `eclipse-keyple/keyple-java` repository to dedicated repositories.
 It also brings many major API changes.
 
-[unreleased]: https://github.com/eclipse-keyple/keyple-plugin-android-nfc-java-lib/compare/3.1.0...HEAD
+[unreleased]: https://github.com/eclipse-keyple/keyple-plugin-android-nfc-java-lib/compare/3.2.0...HEAD
+[3.2.0]: https://github.com/eclipse-keyple/keyple-plugin-android-nfc-java-lib/compare/3.1.0...3.2.0
 [3.1.0]: https://github.com/eclipse-keyple/keyple-plugin-android-nfc-java-lib/compare/3.0.0...3.1.0
 [3.0.0]: https://github.com/eclipse-keyple/keyple-plugin-android-nfc-java-lib/compare/2.2.0...3.0.0
 [2.2.0]: https://github.com/eclipse-keyple/keyple-plugin-android-nfc-java-lib/compare/2.1.0...2.2.0
