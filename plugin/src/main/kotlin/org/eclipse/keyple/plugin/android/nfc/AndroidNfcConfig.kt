@@ -13,6 +13,7 @@ package org.eclipse.keyple.plugin.android.nfc
 
 import android.app.Activity
 import org.eclipse.keyple.core.plugin.storagecard.ApduInterpreterFactory
+import org.eclipse.keyple.plugin.android.nfc.spi.KeyProvider
 
 /**
  * Configuration class holding all the plugin options.
@@ -30,6 +31,8 @@ import org.eclipse.keyple.core.plugin.storagecard.ApduInterpreterFactory
  *   behavior (corresponds to EXTRA_READER_PRESENCE_CHECK_DELAY).
  * @property cardRemovalPollingInterval (optional, default value: `100`) Delay (in milliseconds) for
  *   performing presence checks while waiting for card removal.
+ * @property keyProvider (optional, default value: `null`) A provider for retrieving keys during
+ *   authentication.
  * @since 3.0.0
  */
 data class AndroidNfcConfig(
@@ -38,5 +41,6 @@ data class AndroidNfcConfig(
     val isPlatformSoundEnabled: Boolean = true,
     val skipNdefCheck: Boolean = true,
     val cardInsertionPollingInterval: Int = 0,
-    val cardRemovalPollingInterval: Int = 100
+    val cardRemovalPollingInterval: Int = 100,
+    val keyProvider: KeyProvider? = null
 )

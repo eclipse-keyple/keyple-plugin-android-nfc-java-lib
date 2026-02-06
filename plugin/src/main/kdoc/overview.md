@@ -13,3 +13,18 @@ package.
 Since NFC events are managed asynchronously by the Android system, **working without observation is
 not possible** in this context. Any integration of the Android NFC plugin must therefore be designed
 around this event-driven approach.
+
+### Configuration & Instantiation
+
+To create an instance of the plugin, use the [AndroidNfcPluginFactoryProvider] which requires an
+[AndroidNfcConfig] object.
+
+### Storage Card Support
+
+To support storage cards (such as **Mifare Classic**, **Mifare Ultralight**, etc.), the plugin relies
+on the `keyple-plugin-storagecard-java-api`. An implementation of `ApduInterpreterFactory` must be
+provided via the [AndroidNfcConfig.apduInterpreterFactory] property.
+
+This factory is responsible for creating the interpreter that translates standard APDU commands into
+specific Android NFC I/O operations (e.g. using `MifareClassic` or `MifareUltralight` Android tech
+classes).
