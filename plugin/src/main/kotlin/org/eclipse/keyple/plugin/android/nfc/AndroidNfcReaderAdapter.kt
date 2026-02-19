@@ -335,7 +335,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     return when (keyType) {
       MIFARE_KEY_A -> mifareClassic.authenticateSectorWithKeyA(sectorIndex, usedKey)
       MIFARE_KEY_B -> mifareClassic.authenticateSectorWithKeyB(sectorIndex, usedKey)
-      else -> throw IllegalArgumentException("Unsupported key type: 0x${HexUtil.toHex(keyType)}")
+      else -> throw IllegalArgumentException("Unsupported key type: ${HexUtil.toHex(keyType)}h")
     }
   }
 
@@ -380,12 +380,12 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
                   .put("protocolInfo", HexUtil.toHex(tagB.protocolInfo))
                   .toString()
         }
-        else -> logger.warn("{}: unreachable code", name)
+        else -> logger.warn("unreachable code")
       }
       cardInsertionWaiterAsynchronousApi.onCardInserted()
     } catch (_: NoSuchElementException) {
       tagTechnology = null
-      logger.warn("{}: unsupported card technology", name)
+      logger.warn("Card technology not supported")
     }
   }
 }
