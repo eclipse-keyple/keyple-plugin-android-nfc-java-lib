@@ -64,13 +64,12 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
 
   private var flags: Int
   private var tagTechnology: TagTechnology? = null
-  private var isCardChannelOpen: Boolean = false
   private var isWaitingForCardRemoval = false
 
   private lateinit var cardInsertionWaiterAsynchronousApi: CardInsertionWaiterAsynchronousApi
-  private lateinit var currentCardProtocol: String
-  private lateinit var uid: ByteArray
-  private lateinit var powerOnData: String
+  private var currentCardProtocol: String = ""
+  private var uid: ByteArray = ByteArray(0)
+  private var powerOnData: String = ""
 
   init {
     flags =
@@ -100,32 +99,19 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
 
   override fun getName(): String = AndroidNfcConstants.READER_NAME
 
-  override fun openPhysicalChannel() {
-    if (tagTechnology!!.isConnected) {
-      if (logger.isDebugEnabled) {
-        logger.debug("Card already connected")
-      }
-      return
+  override fun isCardPresent(): Boolean {
+    if (tagTechnology == null) return false
+    val present = isTagPresent()
+    if (!present) {
+      tagTechnology = null
     }
-    try {
-      tagTechnology!!.connect()
-      isCardChannelOpen = true
-      loadedKey = null
-    } catch (e: Exception) {
-      throw CardIOException("Failed to open physical channel", e)
-    }
+    return present
   }
 
-  override fun closePhysicalChannel() {
-    isCardChannelOpen = false
-  }
-
-  override fun isPhysicalChannelOpen(): Boolean {
-    return isCardChannelOpen
-  }
-
-  override fun checkCardPresence(): Boolean {
-    throw UnsupportedOperationException("checkCardPresence() method is not supported")
+  override fun deselectCard() {
+    // No-op: Android NFC deselection is managed by the NFC subsystem.
+    // Closing tagTechnology here would break removal detection in waitForCardRemoval(),
+    // which relies on isConnected to detect physical tag removal.
   }
 
   override fun getPowerOnData() = powerOnData
@@ -192,9 +178,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
       return when (protocol) {
         AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K ->
             mifareClassic.size == MifareClassic.SIZE_1K
-        AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K ->
-            mifareClassic.size == MifareClassic.SIZE_4K
-        else -> false
+        else -> mifareClassic.size == MifareClassic.SIZE_4K
       }
     }
 
@@ -263,16 +247,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     }
   }
 
-  private fun isTagPresent(): Boolean {
-    return try {
-      tagTechnology?.isConnected == true
-    } catch (_: Exception) {
-      if (logger.isDebugEnabled) {
-        logger.debug("Card removed")
-      }
-      false
-    }
-  }
+  private fun isTagPresent(): Boolean = tagTechnology?.isConnected == true
 
   override fun transmitIsoApdu(apdu: ByteArray): ByteArray {
     return (tagTechnology as IsoDep).transceive(apdu)
@@ -343,7 +318,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     if (logger.isDebugEnabled) {
       logger.debug("Card detected [tag={}]", JsonUtil.toJson(tag))
     }
-    isCardChannelOpen = false
+    loadedKey = null
     try {
       for (technology in tag.techList) when (technology) {
         IsoDep::class.qualifiedName -> {
@@ -380,12 +355,15 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
                   .put("protocolInfo", HexUtil.toHex(tagB.protocolInfo))
                   .toString()
         }
-        else -> logger.warn("unreachable code")
+        else -> {
+          // Ignored: other technologies in the tag's techList (e.g. Ndef, NfcV) are not supported
+        }
       }
+      tagTechnology!!.connect()
       cardInsertionWaiterAsynchronousApi.onCardInserted()
-    } catch (_: NoSuchElementException) {
+    } catch (e: Exception) {
       tagTechnology = null
-      logger.warn("Card technology not supported")
+      logger.warn("Failed to connect to card technology [reason={}]", e.message)
     }
   }
 }
