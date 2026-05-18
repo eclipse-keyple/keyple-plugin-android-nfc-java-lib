@@ -19,7 +19,7 @@ plugins {
 dependencies {
   implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.20")
   implementation("org.eclipse.keyple:keyple-common-java-api:2.0.2")
-  implementation("org.eclipse.keyple:keyple-plugin-java-api:3.0.0-SNAPSHOT")
+  implementation("org.eclipse.keyple:keyple-plugin-java-api:3.0.0-SNAPSHOT") { isChanging = true }
   api("org.eclipse.keyple:keyple-plugin-storagecard-java-api:1.1.0")
   implementation("org.eclipse.keyple:keyple-util-java-lib:2.4.1")
   compileOnly("org.slf4j:slf4j-api:1.7.36")
