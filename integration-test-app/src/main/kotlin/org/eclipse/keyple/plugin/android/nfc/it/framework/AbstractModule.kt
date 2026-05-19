@@ -9,21 +9,8 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  ************************************************************************************** */
-package org.eclipse.keyple.plugin.android.nfc.spi
+package org.eclipse.keyple.plugin.android.nfc.it.framework
 
-/**
- * Interface allowing the application to provide authentication keys dynamically.
- *
- * @since 3.2.0
- */
-fun interface KeyProvider {
-
-  /**
-   * Retrieves the key associated with the given key number.
-   *
-   * @param keyNumber The number of the key requested.
-   * @return The key as a byte array, or null if not found.
-   * @since 3.2.0
-   */
-  fun getKey(keyNumber: Int): ByteArray?
+abstract class AbstractModule(val id: String, val title: String) {
+  abstract val scenarios: List<Scenario>
 }
