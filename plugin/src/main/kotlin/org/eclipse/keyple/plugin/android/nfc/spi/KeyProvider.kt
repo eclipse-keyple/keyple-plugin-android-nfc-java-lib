@@ -16,7 +16,7 @@ package org.eclipse.keyple.plugin.android.nfc.spi
  *
  * @since 3.2.0
  */
-interface KeyProvider {
+fun interface KeyProvider {
 
   /**
    * Retrieves the key associated with the given key number.

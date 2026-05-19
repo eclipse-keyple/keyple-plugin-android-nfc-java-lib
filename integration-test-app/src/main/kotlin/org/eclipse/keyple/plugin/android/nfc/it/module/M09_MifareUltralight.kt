@@ -34,7 +34,7 @@ class M09_MifareUltralight : AbstractModule("M09", "MIFARE Ultralight") {
             override val requiredEquipment = "MIFARE Ultralight tag"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val spi = ctx.getSpi()
               spi.activateProtocol(AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT.name)
               if (!ctx.awaitTap("Tap a MIFARE Ultralight tag..."))
@@ -54,7 +54,7 @@ class M09_MifareUltralight : AbstractModule("M09", "MIFARE Ultralight") {
             override val requiredEquipment = "MIFARE Ultralight tag"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val spi = ctx.getSpi()
               spi.activateProtocol(AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT.name)
               if (!ctx.awaitTap("Tap a MIFARE Ultralight tag..."))
@@ -79,7 +79,7 @@ class M09_MifareUltralight : AbstractModule("M09", "MIFARE Ultralight") {
             override val requiredEquipment = "None"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val spi = ctx.getSpi()
               val supported =
                   spi.isProtocolSupported(AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT.name)

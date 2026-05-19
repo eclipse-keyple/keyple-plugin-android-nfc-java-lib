@@ -22,6 +22,8 @@ import android.nfc.tech.TagTechnology
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import org.eclipse.keyple.core.plugin.CardIOException
 import org.eclipse.keyple.core.plugin.CardInsertionWaiterAsynchronousApi
 import org.eclipse.keyple.core.plugin.ReaderIOException
@@ -34,8 +36,6 @@ import org.eclipse.keyple.core.plugin.storagecard.internal.KeyStorageType
 import org.eclipse.keyple.core.plugin.storagecard.internal.spi.ApduInterpreterFactorySpi
 import org.eclipse.keyple.core.plugin.storagecard.internal.spi.ApduInterpreterSpi
 import org.eclipse.keyple.core.util.HexUtil
-import org.eclipse.keyple.core.util.json.JsonUtil
-import org.eclipse.keyple.plugin.android.nfc.spi.KeyProvider
 import org.json.JSONObject
 import org.slf4j.LoggerFactory
 
@@ -54,36 +54,63 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     private const val MIFARE_KEY_B = 0x61
   }
 
-  private val nfcAdapter: NfcAdapter = NfcAdapter.getDefaultAdapter(config.activity)
-  private val options: Bundle
-  private val handler = Handler(Looper.getMainLooper())
-  private val syncWaitRemoval = Object()
-  private val apduInterpreter: ApduInterpreterSpi?
-  private var loadedKey: ByteArray? = null
-  private val keyProvider: KeyProvider? = config.keyProvider
+  // ── NFC infrastructure ────────────────────────────────────────────────────────────────────────
+  private val nfcAdapter: NfcAdapter =
+      NfcAdapter.getDefaultAdapter(config.activity)
+          ?: throw IllegalStateException(
+              "NFC is not available on this device or is disabled in system settings"
+          )
+  private val readerModeOptions: Bundle =
+      Bundle().apply {
+        if (config.cardInsertionPollingInterval > 0) {
+          putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, config.cardInsertionPollingInterval)
+        }
+      }
+  private val mainThreadHandler = Handler(Looper.getMainLooper())
 
-  private var flags: Int
-  private var tagTechnology: TagTechnology? = null
+  // ── Protocol configuration ────────────────────────────────────────────────────────────────────
+  // NFC_A is shared by ISO_14443_4 and all MIFARE variants. Tracking active protocols as a set
+  // and computing flags on demand (rather than incrementally OR/AND-NOT-ing) ensures that
+  // deactivating one protocol never removes a technology bit still needed by another.
+  private val baseFlags: Int = // derived from config (SKIP_NDEF, NO_PLATFORM_SOUNDS); never changes
+      (if (config.skipNdefCheck) NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK else 0) or
+          (if (!config.isPlatformSoundEnabled) NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS else 0)
+  private val activeProtocols = mutableSetOf<AndroidNfcSupportedProtocols>()
+  private val readerModeFlags: Int
+    get() {
+      var techFlags = 0
+      for (protocol in activeProtocols) {
+        techFlags =
+            techFlags or
+                when (protocol) {
+                  AndroidNfcSupportedProtocols.ISO_14443_4 ->
+                      NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_NFC_A
+                  AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT,
+                  AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K,
+                  AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K -> NfcAdapter.FLAG_READER_NFC_A
+                }
+      }
+      return baseFlags or techFlags
+    }
+
+  // ── Monitoring lifecycle ──────────────────────────────────────────────────────────────────────
+  private var isMonitoringActive = false
   private var isWaitingForCardRemoval = false
+  private val removalLock = ReentrantLock()
+  private val removalCondition = removalLock.newCondition()
+  private lateinit var insertionCallback: CardInsertionWaiterAsynchronousApi
 
-  private lateinit var cardInsertionWaiterAsynchronousApi: CardInsertionWaiterAsynchronousApi
-  private var currentCardProtocol: String = ""
-  private var uid: ByteArray = ByteArray(0)
+  // ── Current tag state (reset at each detection cycle start) ──────────────────────────────────
+  @Volatile private var tagTechnology: TagTechnology? = null
+  private var currentTagTechId: String = "" // qualified class name of the active Android NFC tech
+  private var tagUid: ByteArray = ByteArray(0)
   private var powerOnData: String = ""
 
+  // ── Storage card support (optional, MIFARE) ───────────────────────────────────────────────────
+  private val apduInterpreter: ApduInterpreterSpi?
+  private var loadedKey: ByteArray? = null
+
   init {
-    flags =
-        (if (config.skipNdefCheck) NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK else 0) or
-            (if (!config.isPlatformSoundEnabled) NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS else 0)
-    options =
-        Bundle().apply {
-          if (config.cardInsertionPollingInterval > 0) {
-            putInt(
-                NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY,
-                config.cardInsertionPollingInterval,
-            )
-          }
-        }
     apduInterpreter =
         config.apduInterpreterFactory?.let {
           require(it is ApduInterpreterFactorySpi) {
@@ -100,6 +127,7 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   override fun getName(): String = AndroidNfcConstants.READER_NAME
 
   override fun isCardPresent(): Boolean {
+    check(isMonitoringActive) { "Call to isCardPresent not allowed outside monitoring" }
     if (tagTechnology == null) return false
     val present = isTagPresent()
     if (!present) {
@@ -138,34 +166,18 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
       AndroidNfcSupportedProtocols.values().any { it.name == readerProtocol }
 
   override fun activateProtocol(readerProtocol: String) {
-    flags =
-        flags or
-            when (AndroidNfcSupportedProtocols.valueOf(readerProtocol)) {
-              AndroidNfcSupportedProtocols.ISO_14443_4 ->
-                  NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_NFC_A
-              AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT,
-              AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K,
-              AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K -> NfcAdapter.FLAG_READER_NFC_A
-            }
+    activeProtocols.add(AndroidNfcSupportedProtocols.valueOf(readerProtocol))
   }
 
   override fun deactivateProtocol(readerProtocol: String) {
-    flags =
-        flags and
-            when (AndroidNfcSupportedProtocols.valueOf(readerProtocol)) {
-              AndroidNfcSupportedProtocols.ISO_14443_4 ->
-                  (NfcAdapter.FLAG_READER_NFC_B or NfcAdapter.FLAG_READER_NFC_A).inv()
-              AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT,
-              AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K,
-              AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K -> NfcAdapter.FLAG_READER_NFC_A.inv()
-            }
+    activeProtocols.remove(AndroidNfcSupportedProtocols.valueOf(readerProtocol))
   }
 
   override fun isCurrentProtocol(readerProtocol: String): Boolean {
     val protocol = AndroidNfcSupportedProtocols.valueOf(readerProtocol)
 
     // Check if the technology identifier matches
-    if (protocol.androidNfcTechIdentifier != currentCardProtocol) {
+    if (protocol.androidNfcTechIdentifier != currentTagTechId) {
       return false
     }
 
@@ -187,13 +199,15 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
 
   override fun onStartDetection() {
     if (logger.isDebugEnabled) {
-      logger.debug("Starting card detection")
+      logger.debug("Starting card detection [flags=0x{}]", Integer.toHexString(readerModeFlags))
     }
+    // Reset per-card state: these fields belong to the connected tag and must be empty
+    // before a new card is tapped so that getPowerOnData() / getUID() are never stale.
+    powerOnData = ""
+    tagUid = ByteArray(0)
     try {
-      nfcAdapter.enableReaderMode(config.activity, this, flags, options)
-      if (logger.isDebugEnabled) {
-        logger.debug("Card detection started")
-      }
+      nfcAdapter.enableReaderMode(config.activity, this, readerModeFlags, readerModeOptions)
+      isMonitoringActive = true
     } catch (e: Exception) {
       throw ReaderIOException("Failed to start card detection", e)
     }
@@ -203,58 +217,75 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
     if (logger.isDebugEnabled) {
       logger.debug("Stopping card detection")
     }
+    // Null out the tag reference *before* disableReaderMode() so that any concurrently-running
+    // tagPresenceChecker on the main thread sees null and short-circuits without calling
+    // isConnected() on the now-invalidated tag (which would throw SecurityException).
+    tagTechnology = null
+    isMonitoringActive = false
     try {
       nfcAdapter.disableReaderMode(config.activity)
-      if (logger.isDebugEnabled) {
-        logger.debug("Card detection stopped")
-      }
     } catch (e: Exception) {
       throw ReaderIOException("Failed to stop card detection", e)
     }
   }
 
   override fun setCallback(callback: CardInsertionWaiterAsynchronousApi) {
-    this.cardInsertionWaiterAsynchronousApi = callback
+    insertionCallback = callback
   }
 
   override fun waitForCardRemoval() {
     if (!isWaitingForCardRemoval) {
       if (logger.isDebugEnabled) {
-        logger.debug("Waiting for card removal...")
+        logger.debug("Polling for card removal (interval={}ms)", config.cardRemovalPollingInterval)
       }
       isWaitingForCardRemoval = true
-      handler.post(tagPresenceChecker)
-      synchronized(syncWaitRemoval) { syncWaitRemoval.wait() }
+      mainThreadHandler.post(tagPresenceChecker)
+      removalLock.withLock { removalCondition.await() }
       isWaitingForCardRemoval = false
     }
   }
 
   override fun stopWaitForCardRemoval() {
+    if (logger.isDebugEnabled) {
+      logger.debug("Removal wait stopped")
+    }
     isWaitingForCardRemoval = false
-    handler.removeCallbacks(tagPresenceChecker)
-    synchronized(syncWaitRemoval) { syncWaitRemoval.notify() }
+    mainThreadHandler.removeCallbacks(tagPresenceChecker)
+    removalLock.withLock { removalCondition.signal() }
   }
 
   private val tagPresenceChecker: Runnable by lazy {
     Runnable {
       if (!isTagPresent()) {
-        synchronized(syncWaitRemoval) { syncWaitRemoval.notify() }
+        logger.info("Card removed")
+        removalLock.withLock { removalCondition.signal() }
         return@Runnable
       }
       if (isWaitingForCardRemoval) {
-        handler.postDelayed(tagPresenceChecker, config.cardRemovalPollingInterval.toLong())
+        mainThreadHandler.postDelayed(
+            tagPresenceChecker,
+            config.cardRemovalPollingInterval.toLong(),
+        )
       }
     }
   }
 
-  private fun isTagPresent(): Boolean = tagTechnology?.isConnected == true
+  private fun isTagPresent(): Boolean =
+      try {
+        tagTechnology?.isConnected == true
+      } catch (_: SecurityException) {
+        // Defensive catch: should not occur because onStopDetection() nulls tagTechnology before
+        // calling disableReaderMode(), but retained as a safety net for any residual race.
+        logger.warn("Unexpected SecurityException in isTagPresent — treating tag as removed")
+        false
+      }
 
   override fun transmitIsoApdu(apdu: ByteArray): ByteArray {
     return (tagTechnology as IsoDep).transceive(apdu)
   }
 
   override fun getUID(): ByteArray {
-    return uid
+    return tagUid
   }
 
   override fun readBlock(blockAddress: Int, length: Int): ByteArray {
@@ -301,9 +332,8 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
 
     val usedKey =
         key
-            ?: checkNotNull(keyProvider) { "No key loaded and no key provider available" }
+            ?: checkNotNull(config.keyProvider) { "No key loaded and no key provider available" }
                 .getKey(keyNumber)
-            ?: throw IllegalStateException("No key found for key number: $keyNumber")
 
     val sectorIndex = mifareClassic.blockToSector(blockAddress)
 
@@ -315,42 +345,40 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
   }
 
   override fun onTagDiscovered(tag: Tag) {
-    if (logger.isDebugEnabled) {
-      logger.debug("Card detected [tag={}]", JsonUtil.toJson(tag))
-    }
     loadedKey = null
     try {
       for (technology in tag.techList) when (technology) {
         IsoDep::class.qualifiedName -> {
-          currentCardProtocol = IsoDep::class.qualifiedName!!
+          currentTagTechId = IsoDep::class.qualifiedName!!
           tagTechnology = IsoDep.get(tag)
         }
         MifareUltralight::class.qualifiedName -> {
-          currentCardProtocol = MifareUltralight::class.qualifiedName!!
+          currentTagTechId = MifareUltralight::class.qualifiedName!!
           tagTechnology = MifareUltralight.get(tag)
         }
         MifareClassic::class.qualifiedName -> {
-          currentCardProtocol = MifareClassic::class.qualifiedName!!
+          currentTagTechId = MifareClassic::class.qualifiedName!!
           tagTechnology = MifareClassic.get(tag)
         }
         NfcA::class.qualifiedName -> {
           val tagA = NfcA.get(tag)
-          uid = tagA.tag.id
+          tagUid = tagA.tag.id
+          @Suppress("SpellCheckingInspection")
           powerOnData =
               JSONObject()
                   .put("type", "A")
-                  .put("uid", HexUtil.toHex(uid))
+                  .put("uid", HexUtil.toHex(tagUid))
                   .put("atqa", HexUtil.toHex(tagA.atqa))
                   .put("sak", HexUtil.toHex(tagA.sak))
                   .toString()
         }
         NfcB::class.qualifiedName -> {
           val tagB = NfcB.get(tag)
-          uid = tagB.tag.id
+          tagUid = tagB.tag.id
           powerOnData =
               JSONObject()
                   .put("type", "B")
-                  .put("uid", HexUtil.toHex(uid))
+                  .put("uid", HexUtil.toHex(tagUid))
                   .put("applicationData", HexUtil.toHex(tagB.applicationData))
                   .put("protocolInfo", HexUtil.toHex(tagB.protocolInfo))
                   .toString()
@@ -359,11 +387,21 @@ internal class AndroidNfcReaderAdapter(private val config: AndroidNfcConfig) :
           // Ignored: other technologies in the tag's techList (e.g. Ndef, NfcV) are not supported
         }
       }
+      val selectedTech = tagTechnology?.let { it::class.java.simpleName } ?: "none"
+      val uidHex = if (tagUid.isNotEmpty()) HexUtil.toHex(tagUid) else "n/a"
+      logger.info("Card detected [tech={}, uid={}]", selectedTech, uidHex)
+      if (logger.isDebugEnabled) {
+        logger.debug("Tag techs: {}", tag.techList.joinToString { it.substringAfterLast('.') })
+      }
       tagTechnology!!.connect()
-      cardInsertionWaiterAsynchronousApi.onCardInserted()
+      insertionCallback.onCardInserted()
     } catch (e: Exception) {
       tagTechnology = null
-      logger.warn("Failed to connect to card technology [reason={}]", e.message)
+      logger.warn(
+          "Failed to connect to tag [reason={}, type={}]",
+          e.message,
+          e::class.java.simpleName,
+      )
     }
   }
 }

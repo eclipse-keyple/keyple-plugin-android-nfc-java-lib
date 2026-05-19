@@ -20,13 +20,17 @@ import org.eclipse.keyple.core.service.Plugin
 import org.eclipse.keyple.core.service.SmartCardService
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcConstants
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcReader
+import org.eclipse.keyple.plugin.android.nfc.AndroidNfcSupportedProtocols
 import org.eclipse.keypop.reader.ObservableCardReader
+import org.slf4j.LoggerFactory
 
 /**
  * Shared state passed to every scenario. Coordinates card events between the UI thread (NFC
  * callbacks) and scenario threads (blocking waits).
  */
 class ValidationContext(val log: UiLog, private val activity: AppCompatActivity) {
+
+  private val logger = LoggerFactory.getLogger(ValidationContext::class.java)
 
   var service: SmartCardService? = null
   var plugin: Plugin? = null
@@ -52,6 +56,19 @@ class ValidationContext(val log: UiLog, private val activity: AppCompatActivity)
   fun getObsSpi(): ObservableReaderSpi = getSpi() as ObservableReaderSpi
 
   /**
+   * Reactivates all supported protocols on the reader SPI, restoring a known-good state before
+   * each scenario. Call this at the start of every test to guarantee protocol independence: a test
+   * that called [ConfigurableReaderSpi.deactivateProtocol] (even in a finally block that was
+   * skipped on cancellation) cannot silently corrupt the next test's detection flags.
+   */
+  fun resetProtocols() {
+    if (!isInitialized) return
+    val spi = getSpi()
+    AndroidNfcSupportedProtocols.values().forEach { spi.activateProtocol(it.name) }
+    logger.debug("Protocols reset — all protocols active")
+  }
+
+  /**
    * Logs [prompt], starts card detection in SINGLESHOT mode, and blocks until a card is detected
    * or the timeout expires. Returns true if a card was detected, false on timeout.
    */
@@ -59,9 +76,30 @@ class ValidationContext(val log: UiLog, private val activity: AppCompatActivity)
     cardInsertedLatch = CountDownLatch(1)
     log.info(prompt)
     activity.runOnUiThread {
-      observableReader?.startCardDetection(ObservableCardReader.DetectionMode.SINGLESHOT)
+      if (observableReader == null) {
+        logger.error("awaitTap: observableReader is null — startCardDetection skipped")
+        log.error("observableReader is null — detection cannot start")
+      } else {
+        try {
+          logger.info("awaitTap: calling startCardDetection(REPEATING) on {}",
+              observableReader!!.javaClass.name)
+          observableReader!!.startCardDetection(ObservableCardReader.DetectionMode.REPEATING)
+          log.info("Detection active (REPEATING, timeout ${timeoutSec}s)")
+        } catch (e: Exception) {
+          logger.error("startCardDetection failed: {} — {}", e::class.java.simpleName, e.message)
+          log.error("startCardDetection failed: ${e.message}")
+        }
+      }
     }
-    return cardInsertedLatch.await(timeoutSec, TimeUnit.SECONDS)
+    val detected = cardInsertedLatch.await(timeoutSec, TimeUnit.SECONDS)
+    if (!detected) {
+      log.warn("Tap timeout after ${timeoutSec}s — no card detected")
+    } else {
+      // Called from the scenario thread (outside Keyple's event dispatch) so the state machine
+      // can safely transition to WAIT_FOR_CARD_REMOVAL and start polling for tag removal.
+      observableReader?.finalizeCardProcessing()
+    }
+    return detected
   }
 
   /**
@@ -74,7 +112,9 @@ class ValidationContext(val log: UiLog, private val activity: AppCompatActivity)
   ): Boolean {
     cardRemovedLatch = CountDownLatch(1)
     log.info(prompt)
-    return cardRemovedLatch.await(timeoutSec, TimeUnit.SECONDS)
+    val removed = cardRemovedLatch.await(timeoutSec, TimeUnit.SECONDS)
+    if (!removed) log.warn("Removal timeout after ${timeoutSec}s — card still present?")
+    return removed
   }
 
   /** Stops card detection (safe to call even if detection is not active). */
@@ -82,7 +122,12 @@ class ValidationContext(val log: UiLog, private val activity: AppCompatActivity)
     activity.runOnUiThread {
       try {
         observableReader?.stopCardDetection()
-      } catch (_: Exception) {}
+        log.info("Detection stopped")
+      } catch (e: Exception) {
+        // Ignored: stopCardDetection() may throw if NFC was already disabled by the OS;
+        // cleanup is best-effort and no recovery is possible here.
+        logger.debug("stopCardDetection() failed during cleanup — ignored: {}", e.message)
+      }
     }
   }
 

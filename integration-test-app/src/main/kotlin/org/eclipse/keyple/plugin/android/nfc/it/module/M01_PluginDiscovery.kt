@@ -14,6 +14,7 @@ package org.eclipse.keyple.plugin.android.nfc.it.module
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcConstants
 import org.eclipse.keyple.plugin.android.nfc.it.framework.AbstractModule
 import org.eclipse.keyple.plugin.android.nfc.it.framework.Scenario
+import org.eclipse.keyple.plugin.android.nfc.it.framework.Scenario.Companion.ERR_NOT_INITIALIZED
 import org.eclipse.keyple.plugin.android.nfc.it.framework.ScenarioResult
 import org.eclipse.keyple.plugin.android.nfc.it.framework.ValidationContext
 
@@ -28,7 +29,7 @@ class M01_PluginDiscovery : AbstractModule("M01", "Plugin Discovery") {
             override val requiredEquipment = "None"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val name = AndroidNfcConstants.PLUGIN_NAME
               ctx.log.info("Plugin name: $name")
               return if (name == "AndroidNfcPlugin") ScenarioResult.pass(id, "Plugin name: $name")
@@ -41,7 +42,7 @@ class M01_PluginDiscovery : AbstractModule("M01", "Plugin Discovery") {
             override val requiredEquipment = "None"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              val plugin = ctx.plugin ?: return ScenarioResult.fail(id, "Plugin not initialized")
+              val plugin = ctx.plugin ?: return ScenarioResult.fail(id, ERR_NOT_INITIALIZED)
               val readers = plugin.getReaders()
               ctx.log.info("Reader count: ${readers.size}")
               if (readers.isEmpty()) return ScenarioResult.fail(id, "No readers found")
@@ -58,7 +59,7 @@ class M01_PluginDiscovery : AbstractModule("M01", "Plugin Discovery") {
             override val requiredEquipment = "None"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              val plugin = ctx.plugin ?: return ScenarioResult.fail(id, "Plugin not initialized")
+              val plugin = ctx.plugin ?: return ScenarioResult.fail(id, ERR_NOT_INITIALIZED)
               val reader = plugin.getReaders().firstOrNull() ?: return ScenarioResult.fail(id, "No reader")
               val contactless = reader.isContactless
               ctx.log.info("isContactless: $contactless")

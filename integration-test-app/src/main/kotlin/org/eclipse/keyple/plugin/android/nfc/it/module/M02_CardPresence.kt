@@ -23,16 +23,22 @@ class M02_CardPresence : AbstractModule("M02", "Card Presence") {
       listOf<Scenario>(
           object : Scenario {
             override val id = "M02.1"
-            override val title = "isCardPresent() = false before any tap"
-            override val requiredEquipment = "None (keep any card away from the reader)"
+            override val title = "isCardPresent() requires active monitoring"
+            override val requiredEquipment = "None"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
+              // isMonitoringActive guard: isCardPresent() must only be called while the NFC
+              // adapter is in reader mode (between onStartDetection and onStopDetection).
+              // Calling it before startCardDetection() must throw IllegalStateException.
               val spi = ctx.getSpi()
-              val present = spi.isCardPresent()
-              ctx.log.info("isCardPresent(): $present")
-              return if (!present) ScenarioResult.pass(id, "isCardPresent() = false — correct")
-              else ScenarioResult.fail(id, "isCardPresent() = true without tap — unexpected")
+              return try {
+                spi.isCardPresent()
+                ScenarioResult.fail(id, "Expected IllegalStateException — call succeeded without monitoring")
+              } catch (e: IllegalStateException) {
+                ctx.log.info("isCardPresent() outside monitoring → \"${e.message}\"")
+                ScenarioResult.pass(id, "isCardPresent() correctly rejected outside monitoring")
+              }
             }
           },
           object : Scenario {
@@ -41,7 +47,7 @@ class M02_CardPresence : AbstractModule("M02", "Card Presence") {
             override val requiredEquipment = "Any NFC card"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               if (!ctx.awaitTap()) return ScenarioResult.skip(id, "Timeout: no card detected")
               val spi = ctx.getSpi()
               val present = spi.isCardPresent()
@@ -57,7 +63,7 @@ class M02_CardPresence : AbstractModule("M02", "Card Presence") {
             override val requiredEquipment = "Any NFC card"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               if (!ctx.awaitTap()) return ScenarioResult.skip(id, "Timeout: no card detected")
               val spi = ctx.getSpi()
               ctx.log.info("Card tapped, isCardPresent(): ${spi.isCardPresent()}")

@@ -13,6 +13,7 @@ package org.eclipse.keyple.plugin.android.nfc.it.module
 
 import org.eclipse.keyple.plugin.android.nfc.it.framework.AbstractModule
 import org.eclipse.keyple.plugin.android.nfc.it.framework.Scenario
+import org.eclipse.keyple.plugin.android.nfc.it.framework.Scenario.Companion.ERR_TIMEOUT_NO_CARD
 import org.eclipse.keyple.plugin.android.nfc.it.framework.ScenarioResult
 import org.eclipse.keyple.plugin.android.nfc.it.framework.ValidationContext
 
@@ -27,7 +28,7 @@ class M06_CardObservation : AbstractModule("M06", "Card Observation") {
             override val requiredEquipment = "Any NFC card"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val detected = ctx.awaitTap("Tap a card to trigger CARD_INSERTED event...")
               return if (detected) {
                 ctx.log.info("CARD_INSERTED event received")
@@ -44,8 +45,8 @@ class M06_CardObservation : AbstractModule("M06", "Card Observation") {
             override val requiredEquipment = "Any NFC card"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
-              if (!ctx.awaitTap()) return ScenarioResult.skip(id, "Timeout: no card detected")
+              requireInitialized(ctx)?.let { return it }
+              if (!ctx.awaitTap()) return ScenarioResult.skip(id, ERR_TIMEOUT_NO_CARD)
               ctx.log.info("CARD_INSERTED received — waiting for card removal...")
               val removed = ctx.awaitRemoval("Remove the card to trigger CARD_REMOVED event...")
               return if (removed) ScenarioResult.pass(id, "CARD_REMOVED event received correctly")
@@ -58,7 +59,7 @@ class M06_CardObservation : AbstractModule("M06", "Card Observation") {
             override val requiredEquipment = "Any NFC card (tap twice)"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               // First tap
               if (!ctx.awaitTap("Tap #1: tap a card..."))
                   return ScenarioResult.skip(id, "Timeout on first tap")
