@@ -45,5 +45,5 @@ dependencies {
   implementation("androidx.appcompat:appcompat:1.6.1")
   implementation("com.google.android.material:material:1.9.0")
   implementation("org.slf4j:slf4j-api:1.7.36")
-  runtimeOnly("org.slf4j:slf4j-nop:1.7.36")
+  runtimeOnly("org.slf4j:slf4j-android:1.7.36")
 }

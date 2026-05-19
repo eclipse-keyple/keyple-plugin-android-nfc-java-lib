@@ -11,6 +11,7 @@
  ************************************************************************************** */
 package org.eclipse.keyple.plugin.android.nfc.it
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -39,11 +40,16 @@ import org.eclipse.keyple.plugin.android.nfc.it.module.M07_CardDeselect
 import org.eclipse.keyple.plugin.android.nfc.it.module.M08_ObservationLifecycle
 import org.eclipse.keyple.plugin.android.nfc.it.module.M09_MifareUltralight
 import org.eclipse.keyple.plugin.android.nfc.it.module.M10_ErrorRecovery
+import org.eclipse.keyple.plugin.android.nfc.AndroidNfcSupportedProtocols
 import org.eclipse.keypop.reader.CardReaderEvent
 import org.eclipse.keypop.reader.ObservableCardReader
+import org.eclipse.keypop.reader.spi.CardReaderObservationExceptionHandlerSpi
 import org.eclipse.keypop.reader.spi.CardReaderObserverSpi
+import org.slf4j.LoggerFactory
 
 class IntegrationTestActivity : AppCompatActivity(), CardReaderObserverSpi {
+
+  private val logger = LoggerFactory.getLogger(IntegrationTestActivity::class.java)
 
   private lateinit var binding: ActivityIntegrationTestBinding
   private lateinit var ctx: ValidationContext
@@ -75,7 +81,11 @@ class IntegrationTestActivity : AppCompatActivity(), CardReaderObserverSpi {
     try {
       ctx.observableReader?.removeObserver(this)
       ctx.service?.unregisterPlugin(AndroidNfcConstants.PLUGIN_NAME)
-    } catch (_: Exception) {}
+    } catch (e: Exception) {
+      // Ignored: unregistering is best-effort during teardown; any exception here is
+      // unrecoverable and should not prevent the activity from being destroyed.
+      logger.debug("Cleanup on destroy failed — ignored: {}", e.message)
+    }
   }
 
   // ── Keyple initialization ──────────────────────────────────────────────────
@@ -83,16 +93,31 @@ class IntegrationTestActivity : AppCompatActivity(), CardReaderObserverSpi {
   private fun initKeyple(log: UiLog) {
     try {
       val service = SmartCardServiceProvider.getService()
-      val factory = AndroidNfcPluginFactoryProvider.provideFactory(AndroidNfcConfig(activity = this))
+      ctx.service = service // assign early so onDestroy can clean up even if a later step fails
+      val config = AndroidNfcConfig(activity = this, isPlatformSoundEnabled = false)
+      log.info("Config: sound=${config.isPlatformSoundEnabled}, skipNdef=${config.skipNdefCheck}")
+      val factory = AndroidNfcPluginFactoryProvider.provideFactory(config)
       val plugin = service.registerPlugin(factory)
-      val reader = plugin.getReader(AndroidNfcConstants.READER_NAME) as ObservableCardReader
-      reader.addObserver(this)
-      ctx.service = service
       ctx.plugin = plugin
+      val rawReader = plugin.getReader(AndroidNfcConstants.READER_NAME)
+      logger.info("Reader type: {}", rawReader?.javaClass?.name ?: "null")
+      val reader =
+          rawReader as? ObservableCardReader
+              ?: error("Reader '${AndroidNfcConstants.READER_NAME}' is not an ObservableCardReader (actual type: ${rawReader?.javaClass?.name})")
+      reader.setReaderObservationExceptionHandler(
+          CardReaderObservationExceptionHandlerSpi { pluginName, readerName, e ->
+            logger.error("Reader observation error [{}/{}]: {}", pluginName, readerName, e.message)
+            log.error("Reader error [$pluginName/$readerName]: ${e.message}")
+          })
+      reader.addObserver(this)
       ctx.observableReader = reader
+      val spi = ctx.getSpi()
+      AndroidNfcSupportedProtocols.values().forEach { protocol -> spi.activateProtocol(protocol.name) }
+      logger.info("Init complete — observableReader={}", reader.javaClass.simpleName)
       log.info("Plugin '${AndroidNfcConstants.PLUGIN_NAME}' registered")
       log.info("Reader '${AndroidNfcConstants.READER_NAME}' ready")
     } catch (e: Exception) {
+      logger.error("initKeyple failed: {}", e.message)
       log.error("Initialization failed: ${e.message}")
     }
   }
@@ -101,9 +126,15 @@ class IntegrationTestActivity : AppCompatActivity(), CardReaderObserverSpi {
 
   override fun onReaderEvent(event: CardReaderEvent) {
     when (event.type) {
-      CardReaderEvent.Type.CARD_INSERTED -> ctx.notifyCardInserted()
-      CardReaderEvent.Type.CARD_REMOVED -> ctx.notifyCardRemoved()
-      else -> {}
+      CardReaderEvent.Type.CARD_INSERTED -> {
+        ctx.log.info("← CARD_INSERTED")
+        ctx.notifyCardInserted()
+      }
+      CardReaderEvent.Type.CARD_REMOVED -> {
+        ctx.log.info("← CARD_REMOVED")
+        ctx.notifyCardRemoved()
+      }
+      else -> ctx.log.warn("← event: ${event.type}")
     }
   }
 
@@ -112,7 +143,15 @@ class IntegrationTestActivity : AppCompatActivity(), CardReaderObserverSpi {
   private fun runScenario(scenario: Scenario) {
     binding.viewFlipper.displayedChild = 1
     binding.tvScenarioTitle.text = "${scenario.id}: ${scenario.title}"
+    if (!ctx.isInitialized) {
+      binding.tvStatus.text = "✗ FAIL"
+      binding.tvStatus.setTextColor(Color.parseColor("#F44336"))
+      // Do NOT clear the log — keep the initialization error visible
+      ctx.log.error("Cannot run scenario: plugin not initialized (see error above)")
+      return
+    }
     binding.tvStatus.text = "RUNNING"
+    binding.tvStatus.setTextColor(Color.parseColor("#FF9800"))
     val log = ctx.log
     log.clear()
     log.section("${scenario.id} — ${scenario.title}")
@@ -122,6 +161,7 @@ class IntegrationTestActivity : AppCompatActivity(), CardReaderObserverSpi {
         Thread {
           val result =
               try {
+                ctx.resetProtocols()
                 scenario.run(ctx)
               } catch (_: InterruptedException) {
                 ScenarioResult.skip(scenario.id, "Cancelled")
@@ -136,14 +176,17 @@ class IntegrationTestActivity : AppCompatActivity(), CardReaderObserverSpi {
   }
 
   private fun showResult(result: ScenarioResult) {
-    val label =
+    val (label, color) =
         when (result.status) {
-          ScenarioResult.Status.PASS -> "✓ PASS"
-          ScenarioResult.Status.FAIL -> "✗ FAIL"
-          ScenarioResult.Status.SKIP -> "⊘ SKIP"
+          ScenarioResult.Status.PASS -> "✓ PASS" to Color.parseColor("#4CAF50")
+          ScenarioResult.Status.FAIL -> "✗ FAIL" to Color.parseColor("#F44336")
+          ScenarioResult.Status.SKIP -> "⊘ SKIP" to Color.parseColor("#FF9800")
         }
     ctx.log.info("$label — ${result.message}")
-    runOnUiThread { binding.tvStatus.text = label }
+    runOnUiThread {
+      binding.tvStatus.text = label
+      binding.tvStatus.setTextColor(color)
+    }
   }
 
   // ── RecyclerView adapter ───────────────────────────────────────────────────

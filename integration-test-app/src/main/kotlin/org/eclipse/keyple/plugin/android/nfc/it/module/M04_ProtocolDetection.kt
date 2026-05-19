@@ -14,6 +14,7 @@ package org.eclipse.keyple.plugin.android.nfc.it.module
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcSupportedProtocols
 import org.eclipse.keyple.plugin.android.nfc.it.framework.AbstractModule
 import org.eclipse.keyple.plugin.android.nfc.it.framework.Scenario
+import org.eclipse.keyple.plugin.android.nfc.it.framework.Scenario.Companion.ERR_TIMEOUT_NO_CARD
 import org.eclipse.keyple.plugin.android.nfc.it.framework.ScenarioResult
 import org.eclipse.keyple.plugin.android.nfc.it.framework.ValidationContext
 
@@ -28,11 +29,11 @@ class M04_ProtocolDetection : AbstractModule("M04", "Protocol Detection") {
             override val requiredEquipment = "ISO 14443-4 card (A or B)"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val spi = ctx.getSpi()
               spi.activateProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
               if (!ctx.awaitTap("Tap an ISO 14443-4 card..."))
-                  return ScenarioResult.skip(id, "Timeout: no card detected")
+                  return ScenarioResult.skip(id, ERR_TIMEOUT_NO_CARD)
               val current = spi.isCurrentProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
               ctx.log.info("isCurrentProtocol(ISO_14443_4): $current")
               ctx.awaitRemoval()
@@ -47,11 +48,11 @@ class M04_ProtocolDetection : AbstractModule("M04", "Protocol Detection") {
             override val requiredEquipment = "MIFARE Ultralight tag"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val spi = ctx.getSpi()
               spi.activateProtocol(AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT.name)
               if (!ctx.awaitTap("Tap a MIFARE Ultralight tag..."))
-                  return ScenarioResult.skip(id, "Timeout: no card detected")
+                  return ScenarioResult.skip(id, ERR_TIMEOUT_NO_CARD)
               val current = spi.isCurrentProtocol(AndroidNfcSupportedProtocols.MIFARE_ULTRALIGHT.name)
               ctx.log.info("isCurrentProtocol(MIFARE_ULTRALIGHT): $current")
               ctx.awaitRemoval()
@@ -66,11 +67,11 @@ class M04_ProtocolDetection : AbstractModule("M04", "Protocol Detection") {
             override val requiredEquipment = "MIFARE Classic 1K card"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val spi = ctx.getSpi()
               spi.activateProtocol(AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K.name)
               if (!ctx.awaitTap("Tap a MIFARE Classic 1K card..."))
-                  return ScenarioResult.skip(id, "Timeout: no card detected")
+                  return ScenarioResult.skip(id, ERR_TIMEOUT_NO_CARD)
               val current = spi.isCurrentProtocol(AndroidNfcSupportedProtocols.MIFARE_CLASSIC_1K.name)
               ctx.log.info("isCurrentProtocol(MIFARE_CLASSIC_1K): $current")
               ctx.awaitRemoval()
@@ -85,11 +86,11 @@ class M04_ProtocolDetection : AbstractModule("M04", "Protocol Detection") {
             override val requiredEquipment = "MIFARE Classic 4K card"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val spi = ctx.getSpi()
               spi.activateProtocol(AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K.name)
               if (!ctx.awaitTap("Tap a MIFARE Classic 4K card..."))
-                  return ScenarioResult.skip(id, "Timeout: no card detected")
+                  return ScenarioResult.skip(id, ERR_TIMEOUT_NO_CARD)
               val current = spi.isCurrentProtocol(AndroidNfcSupportedProtocols.MIFARE_CLASSIC_4K.name)
               ctx.log.info("isCurrentProtocol(MIFARE_CLASSIC_4K): $current")
               ctx.awaitRemoval()

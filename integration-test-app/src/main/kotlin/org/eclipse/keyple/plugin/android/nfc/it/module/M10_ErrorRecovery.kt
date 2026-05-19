@@ -16,6 +16,7 @@ import org.eclipse.keyple.core.util.HexUtil
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcSupportedProtocols
 import org.eclipse.keyple.plugin.android.nfc.it.framework.AbstractModule
 import org.eclipse.keyple.plugin.android.nfc.it.framework.Scenario
+import org.eclipse.keyple.plugin.android.nfc.it.framework.Scenario.Companion.ERR_TIMEOUT_NO_CARD
 import org.eclipse.keyple.plugin.android.nfc.it.framework.ScenarioResult
 import org.eclipse.keyple.plugin.android.nfc.it.framework.ValidationContext
 
@@ -32,11 +33,11 @@ class M10_ErrorRecovery : AbstractModule("M10", "Error Recovery") {
             override val requiredEquipment = "ISO 14443-4 card (will be removed)"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val spi = ctx.getSpi()
               spi.activateProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
               if (!ctx.awaitTap("Tap an ISO 14443-4 card..."))
-                  return ScenarioResult.skip(id, "Timeout: no card detected")
+                  return ScenarioResult.skip(id, ERR_TIMEOUT_NO_CARD)
               ctx.log.info("Card tapped. Remove the card NOW, then wait 2 seconds...")
               // Wait for the card to be physically removed before sending the APDU
               if (!ctx.awaitRemoval("Remove the card NOW...", timeoutSec = 15))
@@ -65,7 +66,7 @@ class M10_ErrorRecovery : AbstractModule("M10", "Error Recovery") {
             override val requiredEquipment = "ISO 14443-4 card (two taps)"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val spi = ctx.getSpi()
               spi.activateProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
               // First tap — simulate error by removing the card
@@ -78,7 +79,9 @@ class M10_ErrorRecovery : AbstractModule("M10", "Error Recovery") {
                 spi.transmitApdu(GET_CHALLENGE)
               } catch (_: CardIOException) {
                 ctx.log.info("CardIOException as expected on removed card")
-              } catch (_: Exception) {}
+              } catch (e: Exception) {
+                ctx.log.warn("Unexpected exception during APDU probe: ${e.message}")
+              }
               // Second tap — must work normally
               if (!ctx.awaitTap("Tap #2: tap the card again..."))
                   return ScenarioResult.skip(id, "Timeout on second tap")

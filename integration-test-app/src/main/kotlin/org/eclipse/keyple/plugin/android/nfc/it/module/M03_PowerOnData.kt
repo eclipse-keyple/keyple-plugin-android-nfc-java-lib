@@ -28,7 +28,7 @@ class M03_PowerOnData : AbstractModule("M03", "Power-On Data") {
             override val requiredEquipment = "ISO 14443-A card (e.g. MIFARE, ISO 14443-4 A)"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               if (!ctx.awaitTap("Tap an NFC-A card (ISO 14443-A)..."))
                   return ScenarioResult.skip(id, "Timeout: no card detected")
               val spi = ctx.getSpi()
@@ -56,7 +56,7 @@ class M03_PowerOnData : AbstractModule("M03", "Power-On Data") {
             override val requiredEquipment = "ISO 14443-B card (e.g. ID card, ISO 14443-4 B)"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               if (!ctx.awaitTap("Tap an NFC-B card (ISO 14443-B)..."))
                   return ScenarioResult.skip(id, "Timeout: no card detected")
               val spi = ctx.getSpi()
@@ -87,7 +87,7 @@ class M03_PowerOnData : AbstractModule("M03", "Power-On Data") {
             override val requiredEquipment = "None"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val spi = ctx.getSpi()
               val raw = spi.getPowerOnData()
               ctx.log.info("getPowerOnData() without tap: '$raw'")

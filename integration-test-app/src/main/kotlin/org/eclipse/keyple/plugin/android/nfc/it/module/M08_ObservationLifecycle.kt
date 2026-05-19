@@ -13,6 +13,7 @@ package org.eclipse.keyple.plugin.android.nfc.it.module
 
 import org.eclipse.keyple.plugin.android.nfc.it.framework.AbstractModule
 import org.eclipse.keyple.plugin.android.nfc.it.framework.Scenario
+import org.eclipse.keyple.plugin.android.nfc.it.framework.Scenario.Companion.ERR_TIMEOUT_NO_CARD
 import org.eclipse.keyple.plugin.android.nfc.it.framework.ScenarioResult
 import org.eclipse.keyple.plugin.android.nfc.it.framework.ValidationContext
 
@@ -27,7 +28,7 @@ class M08_ObservationLifecycle : AbstractModule("M08", "Observation Lifecycle") 
             override val requiredEquipment = "Any NFC card"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               ctx.log.info("Starting detection...")
               val detected = ctx.awaitTap("Tap a card within 20 seconds...", timeoutSec = 20)
               return if (detected) {
@@ -35,7 +36,7 @@ class M08_ObservationLifecycle : AbstractModule("M08", "Observation Lifecycle") 
                 ctx.awaitRemoval()
                 ScenarioResult.pass(id, "Card event received with detection active")
               } else {
-                ScenarioResult.skip(id, "Timeout: no card detected")
+                ScenarioResult.skip(id, ERR_TIMEOUT_NO_CARD)
               }
             }
           },
@@ -45,10 +46,9 @@ class M08_ObservationLifecycle : AbstractModule("M08", "Observation Lifecycle") 
             override val requiredEquipment = "Any NFC card"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
-              // Stop detection first
+              requireInitialized(ctx)?.let { return it }
+              // Stop detection first (stopDetection() already logs "Detection stopped")
               ctx.stopDetection()
-              ctx.log.info("Detection stopped")
               Thread.sleep(500)
               // Restart and wait for tap
               ctx.log.info("Restarting detection...")
@@ -67,7 +67,7 @@ class M08_ObservationLifecycle : AbstractModule("M08", "Observation Lifecycle") 
             override val requiredEquipment = "None"
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               return try {
                 val obsSpi = ctx.getObsSpi()
                 obsSpi.onStartDetection()
