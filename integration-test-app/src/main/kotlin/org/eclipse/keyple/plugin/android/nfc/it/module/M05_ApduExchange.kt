@@ -15,11 +15,18 @@ import org.eclipse.keyple.core.util.HexUtil
 import org.eclipse.keyple.plugin.android.nfc.AndroidNfcSupportedProtocols
 import org.eclipse.keyple.plugin.android.nfc.it.framework.AbstractModule
 import org.eclipse.keyple.plugin.android.nfc.it.framework.Scenario
+import org.eclipse.keyple.plugin.android.nfc.it.framework.Scenario.Companion.ERR_TIMEOUT_NO_CARD
 import org.eclipse.keyple.plugin.android.nfc.it.framework.ScenarioResult
 import org.eclipse.keyple.plugin.android.nfc.it.framework.ValidationContext
 
 /** M05 - APDU exchange on ISO 14443-4 cards (transmitApdu). */
 class M05_ApduExchange : AbstractModule("M05", "APDU Exchange") {
+
+  private companion object {
+    const val REQUIRED_EQUIPMENT = "ISO 14443-4 card"
+    const val TAP_PROMPT = "Tap an ISO 14443-4 card..."
+    const val ERR_APDU = "APDU failed"
+  }
 
   private val GET_CHALLENGE = HexUtil.toByteArray("0084000008")
   private val SELECT_MF = HexUtil.toByteArray("00A4000000")
@@ -35,14 +42,13 @@ class M05_ApduExchange : AbstractModule("M05", "APDU Exchange") {
           object : Scenario {
             override val id = "M05.1"
             override val title = "GET CHALLENGE (SW=9000)"
-            override val requiredEquipment = "ISO 14443-4 card"
+            override val requiredEquipment = REQUIRED_EQUIPMENT
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val spi = ctx.getSpi()
               spi.activateProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
-              if (!ctx.awaitTap("Tap an ISO 14443-4 card..."))
-                  return ScenarioResult.skip(id, "Timeout: no card detected")
+              if (!ctx.awaitTap(TAP_PROMPT)) return ScenarioResult.skip(id, ERR_TIMEOUT_NO_CARD)
               return try {
                 val cmd = GET_CHALLENGE
                 ctx.log.info("CMD: ${HexUtil.toHex(cmd)}")
@@ -54,21 +60,20 @@ class M05_ApduExchange : AbstractModule("M05", "APDU Exchange") {
                 if (isOk(resp)) ScenarioResult.pass(id, "GET CHALLENGE SW=${sw(resp)}")
                 else ScenarioResult.fail(id, "Unexpected SW: ${sw(resp)}")
               } catch (e: Exception) {
-                ScenarioResult.fail(id, e.message ?: "APDU failed")
+                ScenarioResult.fail(id, e.message ?: ERR_APDU)
               }
             }
           },
           object : Scenario {
             override val id = "M05.2"
             override val title = "SELECT Master File (00 A4 00 00)"
-            override val requiredEquipment = "ISO 14443-4 card"
+            override val requiredEquipment = REQUIRED_EQUIPMENT
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val spi = ctx.getSpi()
               spi.activateProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
-              if (!ctx.awaitTap("Tap an ISO 14443-4 card..."))
-                  return ScenarioResult.skip(id, "Timeout: no card detected")
+              if (!ctx.awaitTap(TAP_PROMPT)) return ScenarioResult.skip(id, ERR_TIMEOUT_NO_CARD)
               return try {
                 val cmd = SELECT_MF
                 ctx.log.info("CMD: ${HexUtil.toHex(cmd)}")
@@ -79,21 +84,20 @@ class M05_ApduExchange : AbstractModule("M05", "APDU Exchange") {
                 spi.deactivateProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
                 ScenarioResult.pass(id, "SELECT MF SW=${sw(resp)}")
               } catch (e: Exception) {
-                ScenarioResult.fail(id, e.message ?: "APDU failed")
+                ScenarioResult.fail(id, e.message ?: ERR_APDU)
               }
             }
           },
           object : Scenario {
             override val id = "M05.3"
             override val title = "Sequential APDUs: 3x GET CHALLENGE"
-            override val requiredEquipment = "ISO 14443-4 card"
+            override val requiredEquipment = REQUIRED_EQUIPMENT
 
             override fun run(ctx: ValidationContext): ScenarioResult {
-              if (!ctx.isInitialized) return ScenarioResult.fail(id, "Plugin not initialized")
+              requireInitialized(ctx)?.let { return it }
               val spi = ctx.getSpi()
               spi.activateProtocol(AndroidNfcSupportedProtocols.ISO_14443_4.name)
-              if (!ctx.awaitTap("Tap an ISO 14443-4 card..."))
-                  return ScenarioResult.skip(id, "Timeout: no card detected")
+              if (!ctx.awaitTap(TAP_PROMPT)) return ScenarioResult.skip(id, ERR_TIMEOUT_NO_CARD)
               return try {
                 var ok = 0
                 for (i in 1..3) {
@@ -107,7 +111,7 @@ class M05_ApduExchange : AbstractModule("M05", "APDU Exchange") {
                 if (ok == 3) ScenarioResult.pass(id, "3/3 sequential APDUs succeeded")
                 else ScenarioResult.fail(id, "$ok/3 APDUs succeeded")
               } catch (e: Exception) {
-                ScenarioResult.fail(id, e.message ?: "APDU failed")
+                ScenarioResult.fail(id, e.message ?: ERR_APDU)
               }
             }
           },
