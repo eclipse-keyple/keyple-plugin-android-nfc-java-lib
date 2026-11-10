@@ -2,6 +2,8 @@ rootProject.name = "keyple-plugin-android-nfc-java-lib"
 
 include(":plugin")
 
+include(":integration-test-app")
+
 pluginManagement {
   repositories {
     gradlePluginPortal()
