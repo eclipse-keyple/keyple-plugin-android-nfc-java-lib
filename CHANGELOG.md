@@ -5,6 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Android applications written in Kotlin must now use Kotlin `2.2` or later to compile against this library.
+### Removed
+- Unused `viewBinding` build feature and `kotlin-parcelize` plugin: the `androidx.databinding:viewbinding` dependency is
+  no longer propagated to the applications.
+### Upgraded
+- `keyple-util-java-lib` from `2.4.1` to `2.5.0`
+- `kotlin-stdlib` and Kotlin Gradle plugin from `1.7.20` to `2.3.21`
+- Android Gradle plugin from `7.4.2` to `9.4.1`
+- Android `compileSdk` from `33` to `35`
+- Gradle from `8.9` to `9.8.1`
+- Dokka from `1.9.20` to `2.2.0`
 
 ## [3.2.2] - 2026-02-20
 ### Changed
