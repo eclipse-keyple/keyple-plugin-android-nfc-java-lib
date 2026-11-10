@@ -1,7 +1,6 @@
-plugins {
-  id("com.android.application")
-  id("kotlin-android")
-}
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+plugins { id("com.android.application") }
 
 android {
   namespace = "org.eclipse.keyple.plugin.android.nfc.it"
@@ -14,17 +13,18 @@ android {
     versionName = "1.0"
   }
   buildFeatures { viewBinding = true }
-  buildTypes {
-    getByName("release") { isMinifyEnabled = false }
-  }
+  buildTypes { getByName("release") { isMinifyEnabled = false } }
   compileOptions {
     sourceCompatibility = JavaVersion.toVersion(project.findProperty("javaSourceLevel") as String)
     targetCompatibility = JavaVersion.toVersion(project.findProperty("javaTargetLevel") as String)
   }
-  kotlinOptions { jvmTarget = project.findProperty("javaTargetLevel") as String }
-  sourceSets { getByName("main").java.srcDirs("src/main/kotlin") }
+  kotlin {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.fromTarget(project.findProperty("javaTargetLevel") as String))
+    }
+  }
   lint { abortOnError = false }
-  packagingOptions {
+  packaging {
     resources.excludes += "META-INF/NOTICE.md"
     resources.excludes += "META-INF/LICENSE.md"
     resources.excludes += "META-INF/LICENSE.txt"
@@ -39,9 +39,8 @@ dependencies {
   implementation("org.eclipse.keypop:keypop-reader-java-api")
   implementation("org.eclipse.keyple:keyple-common-java-api")
   implementation("org.eclipse.keyple:keyple-util-java-lib")
-  implementation(
-      "org.eclipse.keyple:keyple-plugin-java-api:3.0.0-SNAPSHOT") { isChanging = true }
-  implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.20")
+  implementation("org.eclipse.keyple:keyple-plugin-java-api:3.0.0-SNAPSHOT") { isChanging = true }
+  implementation("org.jetbrains.kotlin:kotlin-stdlib:2.3.21")
   implementation("androidx.appcompat:appcompat:1.6.1")
   implementation("com.google.android.material:material:1.9.0")
   implementation("org.slf4j:slf4j-api:1.7.36")
